@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { Home } from './components/Home';
-import { Login } from './components/Login';
-import { Dashboard } from './components/Dashboard';
-import { Pricing } from './components/pricing';
-import { Registration }  from './components/Registration';
+import { ProtectedRoute } from './pages/ProtectedRoute';
+import { Home } from './pages/Home';
+import { Login } from './pages/Login';
+import { Dashboard } from './pages/dashboard';
+import { Pricing } from './pages/Pricing';
+import { Registration }  from './pages/Registration';
 
 
 function App() {
@@ -16,10 +16,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/pricing" element={<Pricing />} />
-          
-          {/* Public Routes */}
-          
-          
+                    
           {/* Protected Routes */}
           <Route 
             path="/registration" 
