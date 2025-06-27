@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, ArrowRight, CheckCircle, Building, MapPin, Phone, CreditCard, Star, Check, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { organizationAPI } from '../api/organizations';
 
 export const Registration: React.FC = () => {
     const [registrationStep, setRegistrationStep] = useState(1);
@@ -18,6 +19,31 @@ export const Registration: React.FC = () => {
         contact_phone: '',
         subscription_plan: ''
     });
+
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    const validateStep = (step: number): boolean => {
+        const newErrors: { [key: string]: string } = {};
+
+        if (step === 1) {
+            if (!formData.organization_name) newErrors.organization_name = 'Organization name is required';
+            if (!formData.organization_code) newErrors.organization_code = 'Organization code is required';
+            if (!formData.organization_type) newErrors.organization_type = 'Organization type is required';
+        } else if (step === 2) {
+            if (!formData.address) newErrors.address = 'Street address is required';
+            if (!formData.city) newErrors.city = 'City is required';
+            if (!formData.country) newErrors.country = 'Country is required';
+        } else if (step === 3) {
+            if (!formData.contact_email) newErrors.contact_email = 'Contact email is required';
+            if (!formData.contact_phone) newErrors.contact_phone = 'Contact phone is required';
+        } else if (step === 4) {
+            if (!selectedPlan) newErrors.selectedPlan = 'Subscription plan must be selected';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
 
     const organizationTypes = [
         'Hospital',
@@ -135,6 +161,30 @@ export const Registration: React.FC = () => {
         }
     };
 
+    const handleRegistration = async () => {
+        if (!validateStep(registrationStep)) return;
+
+        try {
+            const response = await organizationAPI.create({
+                organization_name: formData.organization_name,
+                organization_code: formData.organization_code,
+                organization_type: formData.organization_type,
+                address: formData.address,
+                city: formData.city,
+                country: formData.country,
+                contact_email: formData.contact_email,
+                contact_phone: formData.contact_phone,
+                subscription_plan: formData.subscription_plan
+            });
+
+            console.log('Registration successful:', response);
+            alert('Registration successful! Welcome to Time Tuner.');
+        } catch (error) {
+            console.error('Registration error:', error);
+            alert('An error occurred during registration. Please try again.');
+        }
+    }
+
     const renderPlanSelection = () => {
         return (
             <div className="space-y-8">
@@ -209,6 +259,9 @@ export const Registration: React.FC = () => {
     };
 
     const renderRegistrationStep = () => {
+
+
+
         switch (registrationStep) {
             case 1:
                 return (
@@ -526,12 +579,17 @@ export const Registration: React.FC = () => {
 
                             {registrationStep < 4 ? (
                                 <button
-                                    onClick={nextStep}
-                                    className="bg-gradient-to-r from-blue-500 to-teal-500 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-teal-600 transition-all duration-300 flex items-center group"
+                                    onClick={() => {
+                                        if (validateStep(registrationStep)) {
+                                            setRegistrationStep(registrationStep + 1);
+                                        }
+                                    }}
+                                    className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition"
                                 >
                                     Next
-                                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                                 </button>
+
+
                             ) : (
                                 <button
                                     onClick={() => {

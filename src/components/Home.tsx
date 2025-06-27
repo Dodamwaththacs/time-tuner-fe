@@ -1,13 +1,11 @@
 import React from 'react';
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Shield, Users, Clock, Heart, ArrowRight,  Star} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { Shield, Users, Clock, Heart, ArrowRight, CheckCircle, Star, Building, MapPin, Phone, Mail, CreditCard, Globe, Calendar, Check, X } from 'lucide-react';
 
 
 export const Home: React.FC = () => {
-  const { user } = useAuth();
-    const [isVisible, setIsVisible] = useState(false);
+  const { user, logout } = useAuth();
 
 
   return (
@@ -33,19 +31,33 @@ export const Home: React.FC = () => {
             <Link to="/pricing" className="text-slate-300 hover:text-white transition-colors duration-300">Pricing</Link>
             <Link to="/features" className="text-slate-300 hover:text-white transition-colors duration-300">Features</Link>
             <Link to="/support" className="text-slate-300 hover:text-white transition-colors duration-300">Support</Link>
-            <Link 
-              to="/registration"
-              className="bg-gradient-to-r from-blue-500 to-teal-500 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-teal-600 transition-all duration-300"
-            >
-              Get Started
-            </Link>
-            <Link
-              to="/login"
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-500 text-white px-6 py-2 rounded-lg shadow-md hover:from-blue-600 hover:to-teal-600 transition-all duration-300 font-semibold"
-            >
-              Login
-            </Link>
-
+            
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-slate-300">Welcome, {user.name || user.email}</span>
+                <button
+                  onClick={logout}
+                  className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 font-semibold"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link 
+                  to="/registration"
+                  className="bg-gradient-to-r from-blue-500 to-teal-500 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-teal-600 transition-all duration-300"
+                >
+                  Get Started
+                </Link>
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-500 text-white px-6 py-2 rounded-lg shadow-md hover:from-blue-600 hover:to-teal-600 transition-all duration-300 font-semibold"
+                >
+                  Login
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </header>

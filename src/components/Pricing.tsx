@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
-import { Shield, Users, Clock, Heart, ArrowRight, CheckCircle, Star, Building, MapPin, Phone, Mail, CreditCard, Globe, Calendar, Check, X } from 'lucide-react';
+import { Heart,Check} from 'lucide-react';
 
 
 export const Pricing: React.FC = () => {
