@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Heart, ArrowRight, CheckCircle, Building, MapPin, Phone, CreditCard, Star, Check, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Heart, ArrowRight, CheckCircle, Building, MapPin, Phone, CreditCard, Star, Check, X, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { organizationAPI } from '../api/organizations';
+import { useAuth } from '../contexts/AuthContext';
+import type { UserRole } from '../contexts/AuthContext';
 
 export const Registration: React.FC = () => {
     const [registrationStep, setRegistrationStep] = useState(1);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [currentView, setCurrentView] = useState('registration');
+    const { signup } = useAuth();
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         organization_name: '',
@@ -17,7 +21,11 @@ export const Registration: React.FC = () => {
         country: '',
         contact_email: '',
         contact_phone: '',
-        subscription_plan: ''
+        subscription_plan: '',
+        user_role: 'employee' as UserRole,
+        user_name: '',
+        user_email: '',
+        user_password: ''
     });
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -38,12 +46,16 @@ export const Registration: React.FC = () => {
             if (!formData.contact_phone) newErrors.contact_phone = 'Contact phone is required';
         } else if (step === 4) {
             if (!selectedPlan) newErrors.selectedPlan = 'Subscription plan must be selected';
+        } else if (step === 5) {
+            if (!formData.user_name) newErrors.user_name = 'Full name is required';
+            if (!formData.user_email) newErrors.user_email = 'Email is required';
+            if (!formData.user_password) newErrors.user_password = 'Password is required';
+            if (formData.user_password.length < 6) newErrors.user_password = 'Password must be at least 6 characters';
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-
 
     const organizationTypes = [
         'Hospital',
@@ -165,7 +177,8 @@ export const Registration: React.FC = () => {
         if (!validateStep(registrationStep)) return;
 
         try {
-            const response = await organizationAPI.create({
+            // First create the organization
+            const orgResponse = await organizationAPI.create({
                 organization_name: formData.organization_name,
                 organization_code: formData.organization_code,
                 organization_type: formData.organization_type,
@@ -177,8 +190,21 @@ export const Registration: React.FC = () => {
                 subscription_plan: formData.subscription_plan
             });
 
-            console.log('Registration successful:', response);
-            alert('Registration successful! Welcome to Time Tuner.');
+            // Then create the user account
+            const userSuccess = await signup(
+                formData.user_email,
+                formData.user_password,
+                formData.user_name,
+                formData.user_role
+            );
+
+            if (userSuccess) {
+                console.log('Registration successful:', orgResponse);
+                alert('Registration successful! Welcome to Time Tuner.');
+                navigate('/dashboard');
+            } else {
+                alert('User account creation failed. Please try again.');
+            }
         } catch (error) {
             console.error('Registration error:', error);
             alert('An error occurred during registration. Please try again.');
@@ -259,9 +285,6 @@ export const Registration: React.FC = () => {
     };
 
     const renderRegistrationStep = () => {
-
-
-
         switch (registrationStep) {
             case 1:
                 return (
@@ -459,6 +482,85 @@ export const Registration: React.FC = () => {
                     </div>
                 );
 
+            case 5:
+                return (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <h2 className="text-3xl font-bold text-white mb-4">Create Your Account</h2>
+                            <p className="text-xl text-slate-300">Set up your user account to get started</p>
+                        </div>
+
+                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8">
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-2">Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={formData.user_name}
+                                        onChange={(e) => handleInputChange('user_name', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter your full name"
+                                    />
+                                    {errors.user_name && <p className="text-red-400 text-sm mt-1">{errors.user_name}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-2">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={formData.user_email}
+                                        onChange={(e) => handleInputChange('user_email', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter your email"
+                                    />
+                                    {errors.user_email && <p className="text-red-400 text-sm mt-1">{errors.user_email}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-2">Password</label>
+                                    <input
+                                        type="password"
+                                        value={formData.user_password}
+                                        onChange={(e) => handleInputChange('user_password', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Create a password"
+                                    />
+                                    {errors.user_password && <p className="text-red-400 text-sm mt-1">{errors.user_password}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-white mb-2">Role</label>
+                                    <select
+                                        value={formData.user_role}
+                                        onChange={(e) => handleInputChange('user_role', e.target.value as UserRole)}
+                                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="employee">Employee</option>
+                                        <option value="manager">Manager</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between">
+                            <button
+                                onClick={prevStep}
+                                className="px-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={handleRegistration}
+                                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2"
+                            >
+                                <span>Complete Registration</span>
+                                <CheckCircle className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                );
+
             default:
                 return null;
         }
@@ -541,7 +643,7 @@ export const Registration: React.FC = () => {
 
                     {/* Progress Indicator */}
                     <div className="flex items-center justify-center mb-12">
-                        {[1, 2, 3, 4].map((step) => (
+                        {[1, 2, 3, 4, 5].map((step) => (
                             <div key={step} className="flex items-center">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
                                     step <= registrationStep 
@@ -550,7 +652,7 @@ export const Registration: React.FC = () => {
                                 }`}>
                                     {step}
                                 </div>
-                                {step < 4 && (
+                                {step < 5 && (
                                     <div className={`w-12 h-1 mx-2 transition-all duration-300 ${
                                         step < registrationStep ? 'bg-gradient-to-r from-blue-500 to-teal-500' : 'bg-white/10'
                                     }`}></div>
@@ -563,91 +665,50 @@ export const Registration: React.FC = () => {
                     <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20">
                         {renderRegistrationStep()}
 
-                        {/* Navigation Buttons */}
-                        <div className="flex justify-between mt-8">
-                            <button
-                                onClick={prevStep}
-                                disabled={registrationStep === 1}
-                                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                                    registrationStep === 1
-                                        ? 'bg-white/5 text-slate-500 cursor-not-allowed'
-                                        : 'bg-white/10 text-white hover:bg-white/20'
-                                }`}
-                            >
-                                Previous
-                            </button>
-
-                            {registrationStep < 4 ? (
-                                <button
-                                    onClick={() => {
-                                        if (validateStep(registrationStep)) {
-                                            setRegistrationStep(registrationStep + 1);
-                                        }
-                                    }}
-                                    className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition"
-                                >
-                                    Next
-                                </button>
-
-
-                            ) : (
-                                <button
-                                    onClick={() => {
-                                        console.log('Registration submitted:', formData);
-                                        alert('Registration submitted successfully! Welcome to MedRoster Pro.');
-                                    }}
-                                    disabled={!selectedPlan}
-                                    className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center group ${
-                                        selectedPlan 
-                                            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600' 
-                                            : 'bg-white/5 text-slate-500 cursor-not-allowed'
-                                    }`}
-                                >
-                                    Start Free Trial
-                                    <CheckCircle className="w-5 h-5 ml-2 group-hover:scale-110 transition-transform" />
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Step Descriptions */}
-                    <div className="mt-8 text-center">
-                        <div className="grid md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-                            <div className={`p-4 rounded-xl transition-all duration-300 ${registrationStep === 1 ? 'bg-white/10' : 'bg-white/5'}`}>
-                                <Building className="w-6 h-6 mx-auto mb-2 text-blue-400" />
-                                <h4 className="font-semibold text-white text-sm">Organization</h4>
-                                <p className="text-xs text-slate-400 mt-1">Basic details</p>
-                            </div>
-                            <div className={`p-4 rounded-xl transition-all duration-300 ${registrationStep === 2 ? 'bg-white/10' : 'bg-white/5'}`}>
-                                <MapPin className="w-6 h-6 mx-auto mb-2 text-blue-400" />
-                                <h4 className="font-semibold text-white text-sm">Location</h4>
-                                <p className="text-xs text-slate-400 mt-1">Address info</p>
-                            </div>
-                            <div className={`p-4 rounded-xl transition-all duration-300 ${registrationStep === 3 ? 'bg-white/10' : 'bg-white/5'}`}>
-                                <Phone className="w-6 h-6 mx-auto mb-2 text-blue-400" />
-                                <h4 className="font-semibold text-white text-sm">Contact</h4>
-                                <p className="text-xs text-slate-400 mt-1">Communication</p>
-                            </div>
-                            <div className={`p-4 rounded-xl transition-all duration-300 ${registrationStep === 4 ? 'bg-white/10' : 'bg-white/5'}`}>
-                                <CreditCard className="w-6 h-6 mx-auto mb-2 text-blue-400" />
-                                <h4 className="font-semibold text-white text-sm">Subscription</h4>
-                                <p className="text-xs text-slate-400 mt-1">Plan selection</p>
+                        {/* Step Descriptions */}
+                        <div className="mt-8 text-center">
+                            <div className="grid md:grid-cols-5 gap-4 max-w-3xl mx-auto">
+                                <div className={`p-4 rounded-xl transition-all duration-300 ${registrationStep === 1 ? 'bg-white/10' : 'bg-white/5'}`}>
+                                    <Building className="w-6 h-6 mx-auto mb-2 text-blue-400" />
+                                    <h4 className="font-semibold text-white text-sm">Organization</h4>
+                                    <p className="text-xs text-slate-400 mt-1">Basic details</p>
+                                </div>
+                                <div className={`p-4 rounded-xl transition-all duration-300 ${registrationStep === 2 ? 'bg-white/10' : 'bg-white/5'}`}>
+                                    <MapPin className="w-6 h-6 mx-auto mb-2 text-blue-400" />
+                                    <h4 className="font-semibold text-white text-sm">Location</h4>
+                                    <p className="text-xs text-slate-400 mt-1">Address info</p>
+                                </div>
+                                <div className={`p-4 rounded-xl transition-all duration-300 ${registrationStep === 3 ? 'bg-white/10' : 'bg-white/5'}`}>
+                                    <Phone className="w-6 h-6 mx-auto mb-2 text-blue-400" />
+                                    <h4 className="font-semibold text-white text-sm">Contact</h4>
+                                    <p className="text-xs text-slate-400 mt-1">Communication</p>
+                                </div>
+                                <div className={`p-4 rounded-xl transition-all duration-300 ${registrationStep === 4 ? 'bg-white/10' : 'bg-white/5'}`}>
+                                    <CreditCard className="w-6 h-6 mx-auto mb-2 text-blue-400" />
+                                    <h4 className="font-semibold text-white text-sm">Subscription</h4>
+                                    <p className="text-xs text-slate-400 mt-1">Plan selection</p>
+                                </div>
+                                <div className={`p-4 rounded-xl transition-all duration-300 ${registrationStep === 5 ? 'bg-white/10' : 'bg-white/5'}`}>
+                                    <User className="w-6 h-6 mx-auto mb-2 text-blue-400" />
+                                    <h4 className="font-semibold text-white text-sm">User Account</h4>
+                                    <p className="text-xs text-slate-400 mt-1">Account details</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Help Text */}
-                    <div className="mt-8 text-center">
-                        <p className="text-slate-400 text-sm">
-                            Need help? Contact our support team at{' '}
-                            <a href="mailto:support@medroster.com" className="text-blue-400 hover:text-blue-300 transition-colors">
-                                support@medroster.com
-                            </a>
-                            {' '}or call{' '}
-                            <a href="tel:+1-800-MEDROST" className="text-blue-400 hover:text-blue-300 transition-colors">
-                                +1-800-MEDROST
-                            </a>
-                        </p>
+                        {/* Help Text */}
+                        <div className="mt-8 text-center">
+                            <p className="text-slate-400 text-sm">
+                                Need help? Contact our support team at{' '}
+                                <a href="mailto:support@medroster.com" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                    support@medroster.com
+                                </a>
+                                {' '}or call{' '}
+                                <a href="tel:+1-800-MEDROST" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                    +1-800-MEDROST
+                                </a>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,17 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
+export type UserRole = 'admin' | 'manager' | 'employee';
+
 interface User {
   id: string;
   email: string;
   name: string;
+  role: UserRole;
   provider?: 'email' | 'google'; // Track how user signed up
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, fullName: string) => Promise<boolean>;
+  signup: (email: string, password: string, fullName: string, role: UserRole) => Promise<boolean>;
   googleSignIn: () => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
@@ -37,6 +40,23 @@ const mockUsers: Array<User & { password?: string }> = [
     id: '1',
     email: 'admin@example.com',
     name: 'Admin User',
+    role: 'admin',
+    provider: 'email',
+    password: 'password'
+  },
+  {
+    id: '2',
+    email: 'manager@example.com',
+    name: 'Manager User',
+    role: 'manager',
+    provider: 'email',
+    password: 'password'
+  },
+  {
+    id: '3',
+    email: 'employee@example.com',
+    name: 'Employee User',
+    role: 'employee',
     provider: 'email',
     password: 'password'
   }
@@ -81,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           id: foundUser.id,
           email: foundUser.email,
           name: foundUser.name,
+          role: foundUser.role,
           provider: foundUser.provider
         };
         
@@ -98,7 +119,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signup = async (email: string, password: string, fullName: string): Promise<boolean> => {
+  const signup = async (email: string, password: string, fullName: string, role: UserRole): Promise<boolean> => {
     setIsLoading(true);
     try {
       // Check if user already exists
@@ -112,6 +133,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         id: Date.now().toString(), // Simple ID generation for demo
         email,
         name: fullName,
+        role,
         provider: 'email' as const,
         password
       };
@@ -124,6 +146,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
+        role: newUser.role,
         provider: newUser.provider
       };
 
@@ -153,6 +176,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         id: 'google-' + Date.now().toString(),
         email: 'user@gmail.com',
         name: 'Google User',
+        role: 'employee' as UserRole, // Default role for Google sign-ins
         provider: 'google' as const
       };
 
@@ -173,6 +197,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         id: existingUser.id,
         email: existingUser.email,
         name: existingUser.name,
+        role: existingUser.role,
         provider: existingUser.provider || 'google'
       };
 

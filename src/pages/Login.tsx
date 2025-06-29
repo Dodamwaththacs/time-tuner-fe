@@ -62,7 +62,7 @@ export const Login: React.FC = () => {
           setError('Invalid email or password');
         }
       } else {
-        success = await signup(email, password, fullName);
+        success = await signup(email, password, fullName, "admin");
         if (!success) {
           setError('Failed to create account. Email may already be in use.');
         }
