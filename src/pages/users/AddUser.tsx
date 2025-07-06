@@ -318,65 +318,38 @@ export const AddUser: React.FC = () => {
                   />
                 </div>
 
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password *
+                    Hire Date *
                   </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        errors.password ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {errors.password && (
+                  <input
+                    type="date"
+                    value={formData.hireDate}
+                    onChange={(e) => handleInputChange('hireDate', e.target.value)}
+                    className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.hireDate ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.hireDate && (
                     <p className="mt-1 text-sm text-red-600 flex items-center">
                       <AlertCircle className="w-4 h-4 mr-1" />
-                      {errors.password}
+                      {errors.hireDate}
                     </p>
                   )}
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm Password *
+                    Salary
                   </label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={`w-full border rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Confirm password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {errors.confirmPassword && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="w-4 h-4 mr-1" />
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div>
+                  <input
+                    type="number"
+                    value={formData.salary}
+                    onChange={(e) => handleInputChange('salary', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter annual salary"
+                  />
+                </div>                
               </div>
 
               <div>
@@ -417,8 +390,42 @@ export const AddUser: React.FC = () => {
             </div>
           )}
 
-          {/* Step 2: Role & Department */}
+          {/* Step 2: Employment Details */}
           {activeStep === 2 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900">Employment Details</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Start Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.startDate ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.startDate && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {errors.startDate}
+                    </p>
+                  )}
+                </div>
+
+                
+              </div>
+            </div>
+          )}
+
+
+          {/* Step 3: Role & Department */}
+          {activeStep === 3 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900">Role & Department</h2>
               
@@ -530,68 +537,7 @@ export const AddUser: React.FC = () => {
             </div>
           )}
 
-          {/* Step 3: Employment Details */}
-          {activeStep === 3 && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">Employment Details</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Hire Date *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.hireDate}
-                    onChange={(e) => handleInputChange('hireDate', e.target.value)}
-                    className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.hireDate ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.hireDate && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="w-4 h-4 mr-1" />
-                      {errors.hireDate}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Date *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.startDate ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.startDate && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="w-4 h-4 mr-1" />
-                      {errors.startDate}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Salary
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.salary}
-                    onChange={(e) => handleInputChange('salary', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter annual salary"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
+          
           {/* Step 4: Review & Submit */}
           {activeStep === 4 && (
             <div className="space-y-6">

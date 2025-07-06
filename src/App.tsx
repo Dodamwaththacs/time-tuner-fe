@@ -17,6 +17,9 @@ import { Layout } from './components/Layout';
 import { RoleBasedUI } from './components/RoleBasedUI';
 import { UIStrategyGuide } from './components/UIStrategyGuide';
 import { UserList, RolesPermissions, AddUser } from './pages/users/index';
+import { Departments, Locations, BusinessRules } from './pages/organization/index';
+import { SkillsManagement, ShiftTemplates, HolidayCalendar } from './pages/master-data/index';
+import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine} from './pages/schedules/index';
 
 function App() {
   return (
@@ -137,6 +140,103 @@ function App() {
             } 
           />
           
+          {/* Organization Management Routes */}
+          <Route 
+            path="/organization/departments" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Departments />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/organization/locations" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Locations />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/organization/rules" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <BusinessRules />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Master Data Routes */}
+          <Route 
+            path="/master-data/skills" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <SkillsManagement />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/master-data/shifts" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ShiftTemplates />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/master-data/holidays" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <HolidayCalendar />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Schedules Routes */}
+          <Route 
+            path="/schedules/current" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CurrentSchedules />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/schedules/builder" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ScheduleBuilder />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/schedules/optimization" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <OptimizationEngine />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* System Routes */}
           <Route 
             path="/system" 
             element={

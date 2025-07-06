@@ -22,7 +22,6 @@ import {
   MapPin,
   Award,
   TrendingUp,
-  FileText,
   Search,
   Plus
 } from 'lucide-react';
