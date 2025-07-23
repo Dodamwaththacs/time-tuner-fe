@@ -1,20 +1,4 @@
-import { apiClient } from './index';
-
-export interface Organization {
-  id: string;
-  organization_name: string;
-  organization_code: string;
-  organization_type: string;
-  address: string;
-  city: string;
-  country: string;
-  contact_email: string;
-  contact_phone: string;
-  subscription_plan: string;
-  status: 'active' | 'inactive' | 'pending';
-  created_at: string;
-  updated_at: string;
-}
+// Organization API types and functions
 
 export interface CreateOrganizationRequest {
   organization_name: string;
@@ -28,55 +12,150 @@ export interface CreateOrganizationRequest {
   subscription_plan: string;
 }
 
-export interface UpdateOrganizationRequest extends Partial<CreateOrganizationRequest> {
+export interface Organization {
   id: string;
+  organization_name: string;
+  organization_code: string;
+  organization_type: string;
+  address: string;
+  city: string;
+  country: string;
+  contact_email: string;
+  contact_phone: string;
+  subscription_plan: string;
+  created_at: string;
+  updated_at: string;
 }
 
+export interface CreateOrganizationResponse {
+  success: boolean;
+  organization: Organization;
+  message?: string;
+}
+
+// API functions
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+
 export const organizationAPI = {
-  // Create new organization
-  create: async (orgData: CreateOrganizationRequest): Promise<Organization> => {
-    const response = await apiClient.post('/organizations', orgData);
-    return response.data;
+  /**
+   * Create a new organization
+   */
+  async create(data: CreateOrganizationRequest): Promise<CreateOrganizationResponse> {
+    try {
+      const response = await fetch(`${BASE_URL}/organizations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error creating organization:', error);
+      throw error;
+    }
   },
 
-  // Get organization by ID
-  getById: async (id: string): Promise<Organization> => {
-    const response = await apiClient.get(`/organizations/${id}`);
-    return response.data;
+  /**
+   * Get organization by ID
+   */
+  async getById(id: string): Promise<Organization> {
+    try {
+      const response = await fetch(`${BASE_URL}/organizations/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error fetching organization:', error);
+      throw error;
+    }
   },
 
-  // Get current user's organization
-  getCurrent: async (): Promise<Organization> => {
-    const response = await apiClient.get('/organizations/current');
-    return response.data;
+  /**
+   * Update organization
+   */
+  async update(id: string, data: Partial<CreateOrganizationRequest>): Promise<CreateOrganizationResponse> {
+    try {
+      const response = await fetch(`${BASE_URL}/organizations/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error updating organization:', error);
+      throw error;
+    }
   },
 
-  // Update organization
-  update: async (orgData: UpdateOrganizationRequest): Promise<Organization> => {
-    const { id, ...updateData } = orgData;
-    const response = await apiClient.put(`/organizations/${id}`, updateData);
-    return response.data;
+  /**
+   * Delete organization
+   */
+  async delete(id: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await fetch(`${BASE_URL}/organizations/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error deleting organization:', error);
+      throw error;
+    }
   },
 
-  // Delete organization
-  delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`/organizations/${id}`);
-  },
+  /**
+   * Get all organizations
+   */
+  async getAll(): Promise<Organization[]> {
+    try {
+      const response = await fetch(`${BASE_URL}/organizations`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-  // Get all organizations (admin only)
-  getAll: async (page = 1, limit = 10): Promise<{
-    organizations: Organization[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> => {
-    const response = await apiClient.get(`/organizations?page=${page}&limit=${limit}`);
-    return response.data;
-  },
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-  // Check organization code availability
-  checkCodeAvailability: async (code: string): Promise<{ available: boolean }> => {
-    const response = await apiClient.get(`/organizations/check-code/${code}`);
-    return response.data;
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+      throw error;
+    }
   },
 };

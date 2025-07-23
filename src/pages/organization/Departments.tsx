@@ -232,6 +232,24 @@ export const Departments: React.FC = () => {
     );
   };
 
+function handleSubmit(e:any) {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const data = {
+    department_name: formData.get('department_name'),
+    description: formData.get('description'),
+    location: formData.get('location'),
+    active: formData.get('active') === 'on',
+  };
+
+  if (editingDepartment) {
+    // update logic
+  } else {
+    // create logic
+  }
+}
+
+
   const getTotalEmployees = (department: Department): number => {
     let total = department.employeeCount;
     if (department.children) {
@@ -480,112 +498,72 @@ export const Departments: React.FC = () => {
 
       {/* Add/Edit Department Modal */}
       {(showAddDepartment || editingDepartment) && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                {editingDepartment ? 'Edit Department' : 'Add New Department'}
-              </h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Department Name</label>
-                  <input
-                    type="text"
-                    defaultValue={editingDepartment?.name}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter department name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Department Code</label>
-                  <input
-                    type="text"
-                    defaultValue={editingDepartment?.code}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter department code"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                  <textarea
-                    defaultValue={editingDepartment?.description}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows={3}
-                    placeholder="Enter department description"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Manager</label>
-                  <input
-                    type="text"
-                    defaultValue={editingDepartment?.manager}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter manager name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                  <input
-                    type="text"
-                    defaultValue={editingDepartment?.location}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter location"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Min Staffing</label>
-                    <input
-                      type="number"
-                      defaultValue={editingDepartment?.minStaffing}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Min staff"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Staffing</label>
-                    <input
-                      type="number"
-                      defaultValue={editingDepartment?.maxStaffing}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Max staff"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Optimization Priority</label>
-                  <select
-                    defaultValue={editingDepartment?.optimizationPriority}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
-                </div>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddDepartment(false);
-                      setEditingDepartment(null);
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    {editingDepartment ? 'Update' : 'Create'} Department
-                  </button>
-                </div>
-              </form>
-            </div>
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div className="mt-3">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          {editingDepartment ? 'Edit Department' : 'Add New Department'}
+        </h3>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Department Name</label>
+            <input
+              type="text"
+              defaultValue={editingDepartment?.name}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter department name"
+              name="department_name"
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              defaultValue={editingDepartment?.description}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={3}
+              placeholder="Enter department description"
+              name="description"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+            <input
+              type="text"
+              defaultValue={editingDepartment?.location}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter location"
+              name="location"
+            />
+          </div>
+
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddDepartment(false);
+                setEditingDepartment(null);
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              {editingDepartment ? 'Update' : 'Create'} Department
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }; 
