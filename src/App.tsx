@@ -18,8 +18,9 @@ import { RoleBasedUI } from './components/RoleBasedUI';
 import { UIStrategyGuide } from './components/UIStrategyGuide';
 import { UserList, RolesPermissions, AddUser } from './pages/users/index';
 import { Departments, Locations, BusinessRules } from './pages/organization/index';
-import { SkillsManagement, ShiftTemplates, HolidayCalendar } from './pages/master-data/index';
+import { SkillsManagement, ShiftTemplates, HolidayCalendar, Contract } from './pages/master-data/index';
 import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine} from './pages/schedules/index';
+import { EmployeeRoles } from './pages/employee-management/index';
 
 function App() {
   return (
@@ -139,7 +140,19 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          
+
+          {/* Employee Management Routes */}
+          <Route 
+            path="/employees/roles" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <EmployeeRoles />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
           {/* Organization Management Routes */}
           <Route 
             path="/organization/departments" 
@@ -179,6 +192,17 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <SkillsManagement />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/master-data/contracts" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Contract />
                 </Layout>
               </ProtectedRoute>
             } 

@@ -23,7 +23,8 @@ import {
   Award,
   TrendingUp,
   Search,
-  Plus
+  Plus,
+  PaperclipIcon
 } from 'lucide-react';
 
 interface NavItem {
@@ -66,6 +67,17 @@ const navItems: NavItem[] = [
     ]
   },
   {
+    label: 'Employee Management',
+    path: '/employees',
+    icon: Users,
+    roles: ['admin'],
+    subItems: [
+      { label: 'All Employees', path: '/employees/list', icon: Users, roles: ['admin'] },
+      { label: 'Roles & Permissions', path: '/employees/roles', icon: Shield, roles: ['admin'] },
+      { label: 'Add Employee', path: '/employees/add', icon: Plus, roles: ['admin'] }
+    ]
+  },
+  {
     label: 'Master Data',
     path: '/master-data',
     icon: Settings,
@@ -73,6 +85,7 @@ const navItems: NavItem[] = [
     subItems: [
       { label: 'Skills Management', path: '/master-data/skills', icon: Award, roles: ['admin'] },
       { label: 'Shift Templates', path: '/master-data/shifts', icon: Clock, roles: ['admin'] },
+      { label: 'Contract', path: '/master-data/contracts', icon: PaperclipIcon, roles: ['admin'] },
       { label: 'Holiday Calendar', path: '/master-data/holidays', icon: Calendar, roles: ['admin'] }
     ]
   },

@@ -23,6 +23,14 @@ interface Skill {
   proficiency: 'CERTIFIED' | 'EXPERIENCED' | 'EXPERT' | null;
 }
 
+interface Contract {
+  contract_start: Date;
+  contract_end ?: Date;
+  fte_percentage ?: number;
+  active : boolean;
+}
+
+
 const departments: Department[] = [
   { id: 'emergency', name: 'Emergency Department', location: 'Main Hospital' },
   { id: 'icu', name: 'Intensive Care Unit', location: 'Main Hospital' },
@@ -55,7 +63,8 @@ const contracts = [
 const steps = [
   { id: 1, name: 'Basic Information', icon: UserPlus },
   { id: 2, name: 'Role & Department', icon: Shield },
-  { id: 3, name: 'Review & Submit', icon: CheckCircle }
+  { id: 3, name: 'Contract Information', icon: Award },
+  { id: 4, name: 'Review & Submit', icon: CheckCircle },
 ];
 
 export const AddUser: React.FC = () => {
@@ -66,6 +75,10 @@ export const AddUser: React.FC = () => {
     lastName: '',
     email: '',
     phone: '',
+    contractStart: '',
+    contractEnd: '',
+    ftePercentage: 0,
+    activeContract: false,
     role: 'employee' as UserRole,
     department: '',
     hireDate: '',
@@ -152,7 +165,11 @@ export const AddUser: React.FC = () => {
       contract: '',
       salary: '',
       skills: [],
-      avatar: null
+      avatar: null,
+      contractStart: '',
+      contractEnd: '',
+      ftePercentage: 0,
+      activeContract: false
     });
     setErrors({});
     setActiveStep(1);
@@ -499,9 +516,68 @@ export const AddUser: React.FC = () => {
             </div>
           )}
 
-          
-          {/* Step 3: Review & Submit */}
+          {/* Contract Information */}
           {activeStep === 3 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900">Contract Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contract Start Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.contractStart}
+                    onChange={(e) => handleInputChange('contractStart', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"      
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contract End Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.contractEnd}
+                    onChange={(e) => handleInputChange('contractEnd', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    FTE Percentage
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.ftePercentage}
+                    onChange={(e) => handleInputChange('ftePercentage', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter FTE percentage"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Please enter a value between 0 and 100.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Active Contract
+                  </label>
+                  <select
+                    value={formData.activeContract ? 'true' : 'false'}
+                    onChange={(e) => handleInputChange('activeContract', e.target.value === 'true')}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Review & Submit */}
+          {activeStep === 4 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900">Review & Submit</h2>
               
