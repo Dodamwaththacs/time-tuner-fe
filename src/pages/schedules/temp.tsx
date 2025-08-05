@@ -18,7 +18,7 @@ import {
   CheckCircle
 } from "lucide-react";
 
-export const ScheduleBuilder: React.FC = () => {
+export const EnhancedScheduleBuilder: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState("2024-03-04");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [currentView, setCurrentView] = useState("form"); // "form" or "calendar"

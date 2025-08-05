@@ -19,7 +19,7 @@ import { UIStrategyGuide } from './components/UIStrategyGuide';
 import { UserList, RolesPermissions, AddUser } from './pages/users/index';
 import { Departments, Locations, BusinessRules } from './pages/organization/index';
 import { SkillsManagement, ShiftTemplates, HolidayCalendar, Contract } from './pages/master-data/index';
-import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine} from './pages/schedules/index';
+import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine,EnhancedScheduleBuilder} from './pages/schedules/index';
 import { EmployeeRoles } from './pages/employee-management/index';
 
 function App() {
@@ -245,6 +245,17 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <ScheduleBuilder />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/schedules/builder-temp" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <EnhancedScheduleBuilder />
                 </Layout>
               </ProtectedRoute>
             } 

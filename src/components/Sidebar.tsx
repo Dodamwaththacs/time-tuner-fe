@@ -24,7 +24,10 @@ import {
   TrendingUp,
   Search,
   Plus,
-  PaperclipIcon
+  Paperclip,
+  Menu,
+  X,
+  ChevronLeft
 } from 'lucide-react';
 
 interface NavItem {
@@ -85,7 +88,7 @@ const navItems: NavItem[] = [
     subItems: [
       { label: 'Skills Management', path: '/master-data/skills', icon: Award, roles: ['admin'] },
       { label: 'Shift Templates', path: '/master-data/shifts', icon: Clock, roles: ['admin'] },
-      { label: 'Contract', path: '/master-data/contracts', icon: PaperclipIcon, roles: ['admin'] },
+      { label: 'Contract', path: '/master-data/contracts', icon: Paperclip, roles: ['admin'] },
       { label: 'Holiday Calendar', path: '/master-data/holidays', icon: Calendar, roles: ['admin'] }
     ]
   },
@@ -110,7 +113,8 @@ const navItems: NavItem[] = [
     subItems: [
       { label: 'Current Schedules', path: '/schedules/current', icon: Calendar, roles: ['manager'] },
       { label: 'Schedule Builder', path: '/schedules/builder', icon: Plus, roles: ['manager'] },
-      { label: 'Optimization Engine', path: '/schedules/optimize', icon: Target, roles: ['manager'] }
+      { label: 'Optimization Engine', path: '/schedules/optimize', icon: Target, roles: ['manager'] },
+      { label: 'Schedule Builder Temp', path: '/schedules/builder-temp', icon: Plus, roles: ['manager'] }
     ]
   },
   {
@@ -213,6 +217,8 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
   const filteredNavItems = navItems.filter(item => 
     item.roles.includes(user?.role || 'employee') &&
@@ -220,7 +226,17 @@ export const Sidebar: React.FC = () => {
      item.subItems?.some(subItem => subItem.label.toLowerCase().includes(searchQuery.toLowerCase())))
   );
 
+  const toggleCollapsed = () => {
+    setIsCollapsed(!isCollapsed);
+    // Close all expanded items when collapsing
+    if (!isCollapsed) {
+      setExpandedItems([]);
+    }
+  };
+
   const toggleExpanded = (path: string) => {
+    if (isCollapsed) return; // Don't expand when collapsed
+    
     setExpandedItems(prev => 
       prev.includes(path) 
         ? prev.filter(item => item !== path)
@@ -254,39 +270,76 @@ export const Sidebar: React.FC = () => {
     }
   };
 
+  const handleMouseEnter = (label: string) => {
+    if (isCollapsed) {
+      setShowTooltip(label);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setShowTooltip(null);
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white w-72 shadow-2xl">
+    <div className={`flex flex-col h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white shadow-2xl transition-all duration-300 ease-in-out relative ${
+      isCollapsed ? 'w-16' : 'w-72'
+    }`}>
+      
+      {/* Toggle Button */}
+      <button
+        onClick={toggleCollapsed}
+        className="absolute -right-3 top-6 z-50 bg-slate-700 hover:bg-slate-600 text-white rounded-full p-1.5 shadow-lg border-2 border-slate-600 transition-all duration-200"
+        title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
+      </button>
+
       {/* Header */}
-      <div className="p-6 border-b border-slate-700/50">
-        <div className={`text-2xl font-bold bg-gradient-to-r ${getRoleColor(user?.role || 'employee')} bg-clip-text text-transparent mb-2`}>
-          Time Tuner
+      <div className={`p-6 border-b border-slate-700/50 transition-all duration-300 ${isCollapsed ? 'p-4' : ''}`}>
+        <div className={`text-2xl font-bold bg-gradient-to-r ${getRoleColor(user?.role || 'employee')} bg-clip-text text-transparent mb-2 transition-all duration-300 ${
+          isCollapsed ? 'text-lg text-center' : ''
+        }`}>
+          {isCollapsed ? 'TT' : 'Time Tuner'}
         </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-slate-300 font-medium">{user?.name}</p>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(user?.role || 'employee')} mt-1`}>
-              {(user?.role?.charAt(0)?.toUpperCase() ?? '') + (user?.role?.slice(1) ?? '')}
-            </span>
+        
+        {!isCollapsed && (
+          <div className="flex items-center justify-between animate-fade-in">
+            <div>
+              <p className="text-sm text-slate-300 font-medium">{user?.name}</p>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(user?.role || 'employee')} mt-1`}>
+                {(user?.role?.charAt(0)?.toUpperCase() ?? '') + (user?.role?.slice(1) ?? '')}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
+
+        {isCollapsed && (
+          <div className="flex justify-center mt-2">
+            <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${getRoleColor(user?.role || 'employee')}`}></div>
+          </div>
+        )}
       </div>
 
       {/* Search */}
-      <div className="p-4 border-b border-slate-700/50">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search navigation..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-600 rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-          />
+      {!isCollapsed && (
+        <div className="p-4 border-b border-slate-700/50 animate-fade-in">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search navigation..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-600 rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+      <nav className={`flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent transition-all duration-300 ${
+        isCollapsed ? 'p-2' : 'p-4'
+      }`}>
         <ul className="space-y-1">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
@@ -296,38 +349,71 @@ export const Sidebar: React.FC = () => {
             const hasActiveSubItem = isAnySubItemActive(item.subItems);
 
             return (
-              <li key={item.path}>
+              <li key={item.path} className="relative">
                 <div
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
+                  className={`flex items-center justify-between rounded-lg text-sm font-medium transition-all duration-200 group relative ${
+                    isCollapsed ? 'px-2 py-3' : 'px-3 py-2.5'
+                  } ${
                     isItemActive || hasActiveSubItem
                       ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                       : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                   }`}
+                  onMouseEnter={() => handleMouseEnter(item.label)}
+                  onMouseLeave={handleMouseLeave}
                 >
-                  {hasSubItems ? (
+                  {hasSubItems && !isCollapsed ? (
                     <button
                       onClick={() => toggleExpanded(item.path)}
                       className="flex items-center flex-1 text-left"
                     >
-                      <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
-                      <span className="flex-1">{item.label}</span>
-                      {isExpanded ? (
-                        <ChevronDown className="w-4 h-4 transition-transform" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 transition-transform" />
+                      <Icon className={`flex-shrink-0 transition-all duration-200 ${
+                        isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
+                      }`} />
+                      {!isCollapsed && (
+                        <>
+                          <span className="flex-1">{item.label}</span>
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4 transition-transform" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 transition-transform" />
+                          )}
+                        </>
                       )}
                     </button>
                   ) : (
-                    <Link to={item.path} className="flex items-center flex-1">
-                      <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
-                      <span>{item.label}</span>
+                    <Link 
+                      to={item.path} 
+                      className="flex items-center flex-1"
+                      onClick={() => isCollapsed && hasSubItems && toggleExpanded(item.path)}
+                    >
+                      <Icon className={`flex-shrink-0 transition-all duration-200 ${
+                        isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
+                      }`} />
+                      {!isCollapsed && <span>{item.label}</span>}
                     </Link>
                   )}
                 </div>
 
+                {/* Tooltip for collapsed state */}
+                {isCollapsed && showTooltip === item.label && (
+                  <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 z-50 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg border border-slate-600 whitespace-nowrap animate-fade-in">
+                    <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-slate-800 border-l border-t border-slate-600 rotate-45"></div>
+                    {item.label}
+                    {hasSubItems && (
+                      <div className="mt-2 pt-2 border-t border-slate-600">
+                        {item.subItems?.map((subItem, index) => (
+                          <div key={subItem.path} className="text-xs text-slate-300 py-1">
+                            {subItem.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Sub Items */}
-                {hasSubItems && isExpanded && (
-                  <ul className="ml-4 mt-1 space-y-1 border-l-2 border-slate-600 pl-4">
+                {hasSubItems && isExpanded && !isCollapsed && (
+                  <ul className="ml-4 mt-1 space-y-1 border-l-2 border-slate-600 pl-4 animate-slide-down">
                     {item.subItems?.map((subItem) => {
                       const SubIcon = subItem.icon;
                       const isSubItemActive = isActive(subItem.path);
@@ -357,15 +443,59 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-700/50">
+      <div className={`border-t border-slate-700/50 transition-all duration-300 ${
+        isCollapsed ? 'p-2' : 'p-4'
+      }`}>
         <button
           onClick={logout}
-          className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-red-600/20 hover:text-red-200 transition-all duration-200 group"
+          className={`w-full flex items-center rounded-lg text-sm font-medium text-slate-300 hover:bg-red-600/20 hover:text-red-200 transition-all duration-200 group ${
+            isCollapsed ? 'px-2 py-3 justify-center' : 'px-3 py-2.5'
+          }`}
+          onMouseEnter={() => handleMouseEnter('Logout')}
+          onMouseLeave={handleMouseLeave}
+          title={isCollapsed ? 'Logout' : ''}
         >
-          <LogOut className="w-5 h-5 mr-3 group-hover:text-red-400 transition-colors" />
-          <span>Logout</span>
+          <LogOut className={`group-hover:text-red-400 transition-colors ${
+            isCollapsed ? 'w-6 h-6' : 'w-5 h-5 mr-3'
+          }`} />
+          {!isCollapsed && <span>Logout</span>}
         </button>
+
+        {/* Logout tooltip for collapsed state */}
+        {isCollapsed && showTooltip === 'Logout' && (
+          <div className="absolute left-full ml-2 bottom-4 z-50 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg border border-slate-600 whitespace-nowrap animate-fade-in">
+            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-slate-800 border-l border-t border-slate-600 rotate-45"></div>
+            Logout
+          </div>
+        )}
       </div>
+
+      {/* Custom CSS for animations */}
+      <style>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slide-down {
+          from { 
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to { 
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
+        
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };

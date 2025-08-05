@@ -3,3 +3,4 @@
 export { CurrentSchedules } from './CurrentSchedules';
 export { ScheduleBuilder } from './ScheduleBuilder';
 export { OptimizationEngine } from './OptimizationEngine'; 
+export { EnhancedScheduleBuilder } from './temp';
