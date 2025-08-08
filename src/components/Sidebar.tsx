@@ -165,7 +165,7 @@ const navItems: NavItem[] = [
     roles: ['employee'],
     subItems: [
       { label: 'Set Availability', path: '/availability/set', icon: Clock, roles: ['employee'] },
-      { label: 'Time-off Requests', path: '/availability/timeoff', icon: Calendar, roles: ['employee'] }
+      { label: 'Manage Preferences', path: '/availability/preferences', icon: Calendar, roles: ['employee'] }
     ]
   },
   {

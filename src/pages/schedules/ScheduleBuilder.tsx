@@ -18,13 +18,36 @@ import {
   CheckCircle
 } from "lucide-react";
 
+
+interface Shift {
+  id: number;
+  date: string;
+  shiftTypeId: number;
+  departmentId: number;
+  requiredRoleId: number;
+  requiredEmployees: number;
+  priority: number;
+  notes?: string;
+  minExperience: number;
+  maxConsecutiveDays: number;
+  allowOvertime: boolean;
+  breakDuration: number;
+  skillRequirements: {
+    skillId: number;
+    count: number;
+    mandatory: boolean;
+  }[];
+  costCenter?: string;
+  status: "draft" | "approved" | "published";
+}
+
 export const ScheduleBuilder: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState("2024-03-04");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [currentView, setCurrentView] = useState("form"); // "form" or "calendar"
   const [currentMonth, setCurrentMonth] = useState(new Date(2024, 2, 1)); // March 2024
   const [editingShift, setEditingShift] = useState(null);
-  const [showDetails, setShowDetails] = useState({});
+  const [showDetails, setShowDetails] = useState<Record<number, boolean>>({});
 
   // Sample data based on the database example
   const departments = [
@@ -192,23 +215,25 @@ export const ScheduleBuilder: React.FC = () => {
     setShowAdvanced(false);
   };
 
-  const duplicateShift = (shift) => {
-    const newShiftData = {
+  const duplicateShift = (shift: Shift) => {
+    const newShiftData: Shift = {
       ...shift,
       id: Date.now(),
       date: selectedDate,
-      status: "draft"
+      status: "draft" as const,
+      notes: shift.notes || "",
+      costCenter: shift.costCenter || ""
     };
     setShifts([...shifts, newShiftData]);
   };
 
-  const removeShift = (id) => {
+  const removeShift = (id: number) => {
     if (window.confirm("Are you sure you want to delete this shift?")) {
       setShifts(shifts.filter((shift) => shift.id !== id));
     }
   };
 
-  const toggleShiftDetails = (shiftId) => {
+  const toggleShiftDetails = (shiftId: number) => {
     setShowDetails(prev => ({
       ...prev,
       [shiftId]: !prev[shiftId]

@@ -21,6 +21,7 @@ import { Departments, Locations, BusinessRules } from './pages/organization/inde
 import { SkillsManagement, ShiftTemplates, HolidayCalendar, Contract } from './pages/master-data/index';
 import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine,EnhancedScheduleBuilder} from './pages/schedules/index';
 import { EmployeeRoles } from './pages/employee-management/index';
+import { Availability ,EmployeePreferences} from './pages/availability/index';
 
 function App() {
   return (
@@ -140,6 +141,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
 
           {/* Employee Management Routes */}
           <Route 
@@ -269,6 +271,29 @@ function App() {
                 </Layout>
               </ProtectedRoute>
             } 
+          />
+
+          {/* Availability Management Routes */}
+          <Route
+            path="/availability/set" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Availability />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route 
+            path="/availability/preferences" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <EmployeePreferences />
+                </Layout>
+              </ProtectedRoute>
+            }
           />
           
           {/* System Routes */}
