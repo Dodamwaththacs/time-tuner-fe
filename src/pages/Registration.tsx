@@ -22,7 +22,7 @@ export const Registration: React.FC = () => {
         contact_email: '',
         contact_phone: '',
         subscription_plan: '',
-        user_role: 'employee' as UserRole,
+        user_role: 'admin' as UserRole,
         user_name: '',
         user_email: '',
         user_password: ''
@@ -34,23 +34,34 @@ export const Registration: React.FC = () => {
         const newErrors: { [key: string]: string } = {};
 
         if (step === 1) {
-            if (!formData.organization_name) newErrors.organization_name = 'Organization name is required';
-            if (!formData.organization_code) newErrors.organization_code = 'Organization code is required';
+            if (!formData.organization_name.trim()) newErrors.organization_name = 'Organization name is required';
+            if (!formData.organization_code.trim()) newErrors.organization_code = 'Organization code is required';
             if (!formData.organization_type) newErrors.organization_type = 'Organization type is required';
         } else if (step === 2) {
-            if (!formData.address) newErrors.address = 'Street address is required';
-            if (!formData.city) newErrors.city = 'City is required';
+            if (!formData.address.trim()) newErrors.address = 'Street address is required';
+            if (!formData.city.trim()) newErrors.city = 'City is required';
             if (!formData.country) newErrors.country = 'Country is required';
         } else if (step === 3) {
-            if (!formData.contact_email) newErrors.contact_email = 'Contact email is required';
-            if (!formData.contact_phone) newErrors.contact_phone = 'Contact phone is required';
+            if (!formData.contact_email.trim()) {
+                newErrors.contact_email = 'Contact email is required';
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contact_email)) {
+                newErrors.contact_email = 'Please enter a valid email address';
+            }
+            if (!formData.contact_phone.trim()) newErrors.contact_phone = 'Contact phone is required';
         } else if (step === 4) {
             if (!selectedPlan) newErrors.selectedPlan = 'Subscription plan must be selected';
         } else if (step === 5) {
-            if (!formData.user_name) newErrors.user_name = 'Full name is required';
-            if (!formData.user_email) newErrors.user_email = 'Email is required';
-            if (!formData.user_password) newErrors.user_password = 'Password is required';
-            if (formData.user_password.length < 6) newErrors.user_password = 'Password must be at least 6 characters';
+            if (!formData.user_name.trim()) newErrors.user_name = 'Full name is required';
+            if (!formData.user_email.trim()) {
+                newErrors.user_email = 'Email is required';
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.user_email)) {
+                newErrors.user_email = 'Please enter a valid email address';
+            }
+            if (!formData.user_password) {
+                newErrors.user_password = 'Password is required';
+            } else if (formData.user_password.length < 6) {
+                newErrors.user_password = 'Password must be at least 6 characters';
+            }
         }
 
         setErrors(newErrors);
@@ -153,6 +164,10 @@ export const Registration: React.FC = () => {
 
     const handleInputChange = (field:any, value:any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        // Clear error for this field when user starts typing
+        if (errors[field]) {
+            setErrors(prev => ({ ...prev, [field]: '' }));
+        }
     };
 
     const handlePlanSelect = (planId:any) => {
@@ -162,14 +177,18 @@ export const Registration: React.FC = () => {
     };
 
     const nextStep = () => {
-        if (registrationStep < 4) {
-            setRegistrationStep(registrationStep + 1);
+        if (validateStep(registrationStep)) {
+            if (registrationStep < 5) {
+                setRegistrationStep(registrationStep + 1);
+            }
         }
     };
 
     const prevStep = () => {
         if (registrationStep > 1) {
             setRegistrationStep(registrationStep - 1);
+            // Clear errors when going back
+            setErrors({});
         }
     };
 
@@ -177,34 +196,38 @@ export const Registration: React.FC = () => {
         if (!validateStep(registrationStep)) return;
 
         try {
+
+            console.log('Form Data:', formData);
             // First create the organization
             const orgResponse = await organizationAPI.create({
-                organization_name: formData.organization_name,
-                organization_code: formData.organization_code,
-                organization_type: formData.organization_type,
+                organizationName: formData.organization_name,
+                organizationCode: formData.organization_code,
+                organizationType: formData.organization_type,
                 address: formData.address,
                 city: formData.city,
                 country: formData.country,
-                contact_email: formData.contact_email,
-                contact_phone: formData.contact_phone,
-                subscription_plan: formData.subscription_plan
+                contactEmail: formData.contact_email,
+                contactPhone: formData.contact_phone,
+                subscriptionPlan: formData.subscription_plan
             });
 
-            // Then create the user account
-            const userSuccess = await signup(
-                formData.user_email,
-                formData.user_password,
-                formData.user_name,
-                formData.user_role
-            );
+            console.log('Organization created:', orgResponse);
 
-            if (userSuccess) {
-                console.log('Registration successful:', orgResponse);
-                alert('Registration successful! Welcome to Time Tuner.');
-                navigate('/dashboard');
-            } else {
-                alert('User account creation failed. Please try again.');
-            }
+            // Then create the user account
+            // const userSuccess = await signup(
+            //     formData.user_email,
+            //     formData.user_password,
+            //     formData.user_name,
+            //     formData.user_role
+            // );
+
+            // if (userSuccess) {
+            //     console.log('Registration successful:', orgResponse);
+            //     alert('Registration successful! Welcome to Time Tuner.');
+            //     navigate('/dashboard');
+            // } else {
+            //     alert('User account creation failed. Please try again.');
+            // }
         } catch (error) {
             console.error('Registration error:', error);
             alert('An error occurred during registration. Please try again.');
@@ -300,9 +323,12 @@ export const Registration: React.FC = () => {
                                     type="text"
                                     value={formData.organization_name}
                                     onChange={(e) => handleInputChange('organization_name', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                    className={`w-full px-4 py-3 rounded-xl bg-white/10 border text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                                        errors.organization_name ? 'border-red-500' : 'border-white/20'
+                                    }`}
                                     placeholder="Enter organization name"
                                 />
+                                {errors.organization_name && <p className="text-red-400 text-sm mt-1">{errors.organization_name}</p>}
                             </div>
 
                             <div>
@@ -313,9 +339,12 @@ export const Registration: React.FC = () => {
                                     type="text"
                                     value={formData.organization_code}
                                     onChange={(e) => handleInputChange('organization_code', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                    className={`w-full px-4 py-3 rounded-xl bg-white/10 border text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                                        errors.organization_code ? 'border-red-500' : 'border-white/20'
+                                    }`}
                                     placeholder="e.g., MGH001, SFGH002"
                                 />
+                                {errors.organization_code && <p className="text-red-400 text-sm mt-1">{errors.organization_code}</p>}
                             </div>
                         </div>
 
@@ -326,13 +355,27 @@ export const Registration: React.FC = () => {
                             <select
                                 value={formData.organization_type}
                                 onChange={(e) => handleInputChange('organization_type', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                className={`w-full px-4 py-3 rounded-xl bg-white/10 border text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                                    errors.organization_type ? 'border-red-500' : 'border-white/20'
+                                }`}
                             >
                                 <option value="" className="bg-slate-800">Select organization type</option>
                                 {organizationTypes.map(type => (
                                     <option key={type} value={type} className="bg-slate-800">{type}</option>
                                 ))}
                             </select>
+                            {errors.organization_type && <p className="text-red-400 text-sm mt-1">{errors.organization_type}</p>}
+                        </div>
+
+                        {/* Navigation Buttons */}
+                        <div className="flex justify-end pt-6">
+                            <button
+                                onClick={nextStep}
+                                className="bg-gradient-to-r from-blue-500 to-teal-500 text-white px-8 py-3 rounded-xl hover:from-blue-600 hover:to-teal-600 transition-all duration-300 flex items-center"
+                            >
+                                Next
+                                <ArrowRight className="w-5 h-5 ml-2" />
+                            </button>
                         </div>
                     </div>
                 );
@@ -350,9 +393,12 @@ export const Registration: React.FC = () => {
                                 type="text"
                                 value={formData.address}
                                 onChange={(e) => handleInputChange('address', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                className={`w-full px-4 py-3 rounded-xl bg-white/10 border text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                                    errors.address ? 'border-red-500' : 'border-white/20'
+                                }`}
                                 placeholder="Enter complete address"
                             />
+                            {errors.address && <p className="text-red-400 text-sm mt-1">{errors.address}</p>}
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-6">
@@ -364,9 +410,12 @@ export const Registration: React.FC = () => {
                                     type="text"
                                     value={formData.city}
                                     onChange={(e) => handleInputChange('city', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                    className={`w-full px-4 py-3 rounded-xl bg-white/10 border text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                                        errors.city ? 'border-red-500' : 'border-white/20'
+                                    }`}
                                     placeholder="Enter city"
                                 />
+                                {errors.city && <p className="text-red-400 text-sm mt-1">{errors.city}</p>}
                             </div>
 
                             <div>
@@ -376,14 +425,34 @@ export const Registration: React.FC = () => {
                                 <select
                                     value={formData.country}
                                     onChange={(e) => handleInputChange('country', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                    className={`w-full px-4 py-3 rounded-xl bg-white/10 border text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                                        errors.country ? 'border-red-500' : 'border-white/20'
+                                    }`}
                                 >
                                     <option value="" className="bg-slate-800">Select country</option>
                                     {countries.map(country => (
                                         <option key={country} value={country} className="bg-slate-800">{country}</option>
                                     ))}
                                 </select>
+                                {errors.country && <p className="text-red-400 text-sm mt-1">{errors.country}</p>}
                             </div>
+                        </div>
+
+                        {/* Navigation Buttons */}
+                        <div className="flex justify-between pt-6">
+                            <button
+                                onClick={prevStep}
+                                className="px-6 py-3 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={nextStep}
+                                className="bg-gradient-to-r from-blue-500 to-teal-500 text-white px-8 py-3 rounded-xl hover:from-blue-600 hover:to-teal-600 transition-all duration-300 flex items-center"
+                            >
+                                Next
+                                <ArrowRight className="w-5 h-5 ml-2" />
+                            </button>
                         </div>
                     </div>
                 );
@@ -401,9 +470,12 @@ export const Registration: React.FC = () => {
                                 type="email"
                                 value={formData.contact_email}
                                 onChange={(e) => handleInputChange('contact_email', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                className={`w-full px-4 py-3 rounded-xl bg-white/10 border text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                                    errors.contact_email ? 'border-red-500' : 'border-white/20'
+                                }`}
                                 placeholder="admin@organization.com"
                             />
+                            {errors.contact_email && <p className="text-red-400 text-sm mt-1">{errors.contact_email}</p>}
                         </div>
 
                         <div>
@@ -414,9 +486,29 @@ export const Registration: React.FC = () => {
                                 type="tel"
                                 value={formData.contact_phone}
                                 onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                className={`w-full px-4 py-3 rounded-xl bg-white/10 border text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+                                    errors.contact_phone ? 'border-red-500' : 'border-white/20'
+                                }`}
                                 placeholder="+1 (555) 123-4567"
                             />
+                            {errors.contact_phone && <p className="text-red-400 text-sm mt-1">{errors.contact_phone}</p>}
+                        </div>
+
+                        {/* Navigation Buttons */}
+                        <div className="flex justify-between pt-6">
+                            <button
+                                onClick={prevStep}
+                                className="px-6 py-3 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={nextStep}
+                                className="bg-gradient-to-r from-blue-500 to-teal-500 text-white px-8 py-3 rounded-xl hover:from-blue-600 hover:to-teal-600 transition-all duration-300 flex items-center"
+                            >
+                                Next
+                                <ArrowRight className="w-5 h-5 ml-2" />
+                            </button>
                         </div>
                     </div>
                 );
@@ -453,6 +545,7 @@ export const Registration: React.FC = () => {
                                 >
                                     View Plans
                                 </button>
+                                {errors.selectedPlan && <p className="text-red-400 text-sm mt-2">{errors.selectedPlan}</p>}
                             </div>
                         )}
 
@@ -479,6 +572,28 @@ export const Registration: React.FC = () => {
                                 </div>
                             </div>
                         )}
+
+                        {/* Navigation Buttons */}
+                        <div className="flex justify-between pt-6">
+                            <button
+                                onClick={prevStep}
+                                className="px-6 py-3 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={nextStep}
+                                disabled={!selectedPlan}
+                                className={`px-8 py-3 rounded-xl transition-all duration-300 flex items-center ${
+                                    selectedPlan
+                                        ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white hover:from-blue-600 hover:to-teal-600'
+                                        : 'bg-white/10 text-slate-400 cursor-not-allowed'
+                                }`}
+                            >
+                                Next
+                                <ArrowRight className="w-5 h-5 ml-2" />
+                            </button>
+                        </div>
                     </div>
                 );
 
@@ -493,36 +608,42 @@ export const Registration: React.FC = () => {
                         <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8">
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-white mb-2">Full Name</label>
+                                    <label className="block text-sm font-medium text-white mb-2">Full Name *</label>
                                     <input
                                         type="text"
                                         value={formData.user_name}
                                         onChange={(e) => handleInputChange('user_name', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-3 bg-white/20 border rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            errors.user_name ? 'border-red-500' : 'border-white/30'
+                                        }`}
                                         placeholder="Enter your full name"
                                     />
                                     {errors.user_name && <p className="text-red-400 text-sm mt-1">{errors.user_name}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-white mb-2">Email Address</label>
+                                    <label className="block text-sm font-medium text-white mb-2">Email Address *</label>
                                     <input
                                         type="email"
                                         value={formData.user_email}
                                         onChange={(e) => handleInputChange('user_email', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-3 bg-white/20 border rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            errors.user_email ? 'border-red-500' : 'border-white/30'
+                                        }`}
                                         placeholder="Enter your email"
                                     />
                                     {errors.user_email && <p className="text-red-400 text-sm mt-1">{errors.user_email}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-white mb-2">Password</label>
+                                    <label className="block text-sm font-medium text-white mb-2">Password *</label>
                                     <input
                                         type="password"
                                         value={formData.user_password}
                                         onChange={(e) => handleInputChange('user_password', e.target.value)}
-                                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-3 bg-white/20 border rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            errors.user_password ? 'border-red-500' : 'border-white/30'
+                                        }`}
                                         placeholder="Create a password"
                                     />
                                     {errors.user_password && <p className="text-red-400 text-sm mt-1">{errors.user_password}</p>}
@@ -530,15 +651,10 @@ export const Registration: React.FC = () => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-white mb-2">Role</label>
-                                    <select
-                                        value={formData.user_role}
-                                        onChange={(e) => handleInputChange('user_role', e.target.value as UserRole)}
-                                        className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="employee">Employee</option>
-                                        <option value="manager">Manager</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
+                                    <div className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white">
+                                        Administrator
+                                    </div>
+                                    <p className="text-slate-400 text-sm mt-1">You will be created as the organization administrator</p>
                                 </div>
                             </div>
                         </div>

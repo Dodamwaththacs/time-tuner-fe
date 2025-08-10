@@ -20,9 +20,9 @@ import { UserList, RolesPermissions, AddUser } from './pages/users/index';
 import { Departments, Locations, BusinessRules } from './pages/organization/index';
 import { SkillsManagement, ShiftTemplates, HolidayCalendar, Contract } from './pages/master-data/index';
 import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine,EnhancedScheduleBuilder} from './pages/schedules/index';
-import { EmployeeRoles } from './pages/employee-management/index';
+import { EmployeeRoles,AddEmployee } from './pages/employee-management/index';
 import { Availability ,EmployeePreferences} from './pages/availability/index';
-
+// import { ShiftChangeRequestForm  } from './pages/ShiftManagement/ShiftChangeRequestForm';
 function App() {
   return (
     <AuthProvider>
@@ -153,6 +153,17 @@ function App() {
                 </Layout>
               </ProtectedRoute>
             } 
+          />
+
+          <Route 
+            path="/employees/add" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AddEmployee />
+                </Layout>
+              </ProtectedRoute>
+            }
           />
 
           {/* Organization Management Routes */}
@@ -295,6 +306,20 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* <Route 
+            path="/shifts/swaps" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ShiftChangeRequestForm 
+                    availableShifts={[]}
+                    onNewRequest={() => {}}
+                  />
+                </Layout>
+              </ProtectedRoute>
+            }
+          /> */}
           
           {/* System Routes */}
           <Route 

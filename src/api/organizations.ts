@@ -1,15 +1,15 @@
 // Organization API types and functions
 
 export interface CreateOrganizationRequest {
-  organization_name: string;
-  organization_code: string;
-  organization_type: string;
+  organizationName: string;
+  organizationCode: string;
+  organizationType: string;
   address: string;
   city: string;
   country: string;
-  contact_email: string;
-  contact_phone: string;
-  subscription_plan: string;
+  contactEmail: string;
+  contactPhone: string;
+  subscriptionPlan: string;
 }
 
 export interface Organization {
@@ -34,12 +34,10 @@ export interface CreateOrganizationResponse {
 }
 
 // API functions
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 export const organizationAPI = {
-  /**
-   * Create a new organization
-   */
+  
   async create(data: CreateOrganizationRequest): Promise<CreateOrganizationResponse> {
     try {
       const response = await fetch(`${BASE_URL}/organizations`, {
