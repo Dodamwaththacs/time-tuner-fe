@@ -20,7 +20,7 @@ import { UserList, RolesPermissions, AddUser } from './pages/users/index';
 import { Departments, Locations, BusinessRules } from './pages/organization/index';
 import { SkillsManagement, ShiftTemplates, HolidayCalendar, Contract } from './pages/master-data/index';
 import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine,EnhancedScheduleBuilder} from './pages/schedules/index';
-import { EmployeeRoles,AddEmployee } from './pages/employee-management/index';
+import { EmployeeRoles,AddEmployee ,AllEmployees} from './pages/employee-management/index';
 import { Availability ,EmployeePreferences} from './pages/availability/index';
 // import { ShiftChangeRequestForm  } from './pages/ShiftManagement/ShiftChangeRequestForm';
 function App() {
@@ -144,6 +144,17 @@ function App() {
 
 
           {/* Employee Management Routes */}
+
+          <Route 
+            path="/employees/list" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AllEmployees />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route 
             path="/employees/roles" 
             element={

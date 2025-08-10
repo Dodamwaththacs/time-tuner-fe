@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import type { UserRole } from "../../contexts/AuthContext";
 import { usersAPI } from "../../api/users";
 import {
@@ -57,6 +58,7 @@ const transformUser = (apiUser: any): User => {
 
 export const UserList: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
   const [statusFilter, setStatusFilter] = useState<
@@ -169,7 +171,10 @@ export const UserList: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <button 
+            onClick={() => navigate("/users/add")}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
             <UserPlus className="w-4 h-4 mr-2" />
             Add User
           </button>

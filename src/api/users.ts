@@ -14,6 +14,15 @@ export interface AppUser {
   avatar?: string;
 }
 
+export interface CreateUserRequest {
+  email: string;
+  displayName: string;
+  userType: "ADMIN" | "MANAGER" | "EMPLOYEE";
+  phone?: string;
+  avatar?: string;
+  status: boolean;
+}
+
 
 const organizationId = "123e4567-e89b-12d3-a456-426655440001";
 
@@ -42,6 +51,34 @@ export const usersAPI = {
       return result;
     } catch (error) {
       console.error('Error fetching users:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a new user
+   */
+  async create(userData: CreateUserRequest): Promise<any> {
+    try {
+      const response = await fetch(`${BASE_URL}/appUsers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...userData,
+          organization: organizationId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error creating user:', error);
       throw error;
     }
   },

@@ -71,7 +71,7 @@ const navItems: NavItem[] = [
   },
   {
     label: 'Employee Management',
-    path: '/employees',
+    path: '/employees/list',
     icon: Users,
     roles: ['admin'],
     subItems: [
