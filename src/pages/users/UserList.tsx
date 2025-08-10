@@ -71,6 +71,7 @@ export const UserList: React.FC = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        console.log("Fetching users from API...");
         const apiUsers = await usersAPI.getAll();
         console.log("Fetched users from API:", apiUsers);
         
@@ -81,16 +82,12 @@ export const UserList: React.FC = () => {
         setAllUsers(transformedUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
+        
       }
     };
 
     fetchUsers();
   }, []);
-
-
-
-
-  
 
 
   const filteredUsers = useMemo(() => {
@@ -104,7 +101,7 @@ export const UserList: React.FC = () => {
 
       return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [searchQuery, roleFilter, statusFilter]);
+  }, [allUsers, searchQuery, roleFilter, statusFilter]);
 
   const getRoleColor = (role: UserRole) => {
     switch (role) {
