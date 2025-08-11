@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   ChevronUp, 
   User, 
@@ -18,62 +18,12 @@ import {
   CheckCircle,
   XCircle,
   Mail,
-  Shield
+  Shield,
+  Loader
 } from 'lucide-react';
+import { employeeAPI, type Employee, type EmployeeSkill, type EmployeePreference } from '../../api/employee';
 
-// TypeScript interfaces for better type safety
-interface UserAccount {
-  username: string;
-  email: string;
-  userRole: string;
-}
-
-interface Role {
-  roleName: string;
-  description: string;
-}
-
-interface Department {
-  departmentName: string;
-  location: string;
-}
-
-interface Contract {
-  contractName: string;
-  ftePercentage: number;
-}
-
-interface Skill {
-  skillName: string;
-  proficiencyLevel: 'CERTIFIED' | 'EXPERIENCED' | 'EXPERT';
-  certifiedDate: string;
-  expiryDate: string | null;
-}
-
-interface Preference {
-  shiftType: string;
-  department: string;
-  preferenceType: 'PREFERRED' | 'AVAILABLE' | 'UNAVAILABLE';
-  preferenceWeight: number;
-}
-
-interface Employee {
-  id: string;
-  employeeCode: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  hireDate: string;
-  active: boolean;
-  userAccount: UserAccount;
-  primaryRole: Role;
-  primaryDepartment: Department;
-  contract: Contract;
-  skills: Skill[];
-  preferences: Preference[];
-}
-
+// Type aliases for better compatibility
 type FilterStatus = 'all' | 'active' | 'inactive';
 
 // Constants
@@ -90,115 +40,10 @@ const PREFERENCE_COLORS = {
 } as const;
 
 export const AllEmployees: React.FC = () => {
-  // Sample data based on the provided payload structure
-  const [employees] = useState<Employee[]>([
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      "employeeCode": "EMP001",
-      "firstName": "Jessica",
-      "lastName": "Martinez",
-      "email": "j.martinez@stmarys.com",
-      "phone": "+1-555-0201",
-      "hireDate": "2023-03-15",
-      "active": true,
-      "userAccount": {
-        "username": "jessica.martinez",
-        "email": "j.martinez@stmarys.com",
-        "userRole": "EMPLOYEE"
-      },
-      "primaryRole": {
-        "roleName": "Registered Nurse",
-        "description": "Licensed nursing professional"
-      },
-      "primaryDepartment": {
-        "departmentName": "Intensive Care Unit",
-        "location": "Building A - Floor 3"
-      },
-      "contract": {
-        "contractName": "Full-Time RN",
-        "ftePercentage": 1.00
-      },
-      "skills": [
-        {
-          "skillName": "BLS Certification",
-          "proficiencyLevel": "CERTIFIED",
-          "certifiedDate": "2023-02-01",
-          "expiryDate": "2025-02-01"
-        },
-        {
-          "skillName": "ACLS Certification",
-          "proficiencyLevel": "CERTIFIED",
-          "certifiedDate": "2023-02-15",
-          "expiryDate": "2025-02-15"
-        },
-        {
-          "skillName": "Critical Care",
-          "proficiencyLevel": "EXPERIENCED",
-          "certifiedDate": "2023-03-01",
-          "expiryDate": null
-        }
-      ],
-      "preferences": [
-        {
-          "shiftType": "Day Shift",
-          "department": "Intensive Care Unit",
-          "preferenceType": "PREFERRED",
-          "preferenceWeight": 8
-        }
-      ]
-    },
-    {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
-      "employeeCode": "EMP002",
-      "firstName": "Michael",
-      "lastName": "Chen",
-      "email": "m.chen@stmarys.com",
-      "phone": "+1-555-0202",
-      "hireDate": "2022-08-20",
-      "active": true,
-      "userAccount": {
-        "username": "michael.chen",
-        "email": "m.chen@stmarys.com",
-        "userRole": "EMPLOYEE"
-      },
-      "primaryRole": {
-        "roleName": "Registered Nurse",
-        "description": "Licensed nursing professional"
-      },
-      "primaryDepartment": {
-        "departmentName": "Emergency Department",
-        "location": "Building B - Ground Floor"
-      },
-      "contract": {
-        "contractName": "Part-Time RN",
-        "ftePercentage": 0.75
-      },
-      "skills": [
-        {
-          "skillName": "BLS Certification",
-          "proficiencyLevel": "CERTIFIED",
-          "certifiedDate": "2022-07-15",
-          "expiryDate": "2024-07-15"
-        },
-        {
-          "skillName": "Emergency Care",
-          "proficiencyLevel": "EXPERIENCED",
-          "certifiedDate": "2022-08-01",
-          "expiryDate": null
-        }
-      ],
-      "preferences": [
-        {
-          "shiftType": "Night Shift",
-          "department": "Emergency Department",
-          "preferenceType": "PREFERRED",
-          "preferenceWeight": 9
-        }
-      ]
-    },
-    
-  ]);
-
+  // State management
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set());
   const [filterActive, setFilterActive] = useState<FilterStatus>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -206,6 +51,25 @@ export const AllEmployees: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+
+  // Fetch employees from API
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await employeeAPI.getAllEmployeesWithDetails();
+        setEmployees(data);
+      } catch (err) {
+        console.error('Failed to fetch employees:', err);
+        setError('Failed to load employees. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
 
   // Utility functions with proper TypeScript typing
   const toggleEmployeeExpansion = useCallback((employeeId: string) => {
@@ -228,11 +92,11 @@ export const AllEmployees: React.FC = () => {
     });
   }, []);
 
-  const getProficiencyColor = useCallback((level: Skill['proficiencyLevel']): string => {
+  const getProficiencyColor = useCallback((level: EmployeeSkill['proficiencyLevel']): string => {
     return PROFICIENCY_COLORS[level] || 'bg-gray-100 text-gray-800';
   }, []);
 
-  const getPreferenceColor = useCallback((type: Preference['preferenceType']): string => {
+  const getPreferenceColor = useCallback((type: EmployeePreference['preferenceType']): string => {
     return PREFERENCE_COLORS[type] || 'bg-gray-100 text-gray-800';
   }, []);
 
@@ -318,29 +182,57 @@ export const AllEmployees: React.FC = () => {
 
   return (
       <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
-            <p className="text-gray-600 mt-1">
-              Manage staff information, skills, and scheduling preferences
-            </p>
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader className="w-8 h-8 animate-spin text-blue-600 mr-3" />
+            <span className="text-lg text-gray-600">Loading employees...</span>
           </div>
-          <div className="flex space-x-3">
-            <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Employee
-            </button>
-            <button className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-              <Upload className="w-4 h-4 mr-2" />
-              Bulk Import
-            </button>
-            <button className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-              <Download className="w-4 h-4 mr-2" />
-              Export
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <XCircle className="w-5 h-5 text-red-600 mr-2" />
+              <span className="text-red-800 font-medium">Error</span>
+            </div>
+            <p className="text-red-700 mt-1">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
             </button>
           </div>
-        </div>
+        )}
+
+        {/* Main Content - Only show when not loading and no error */}
+        {!loading && !error && (
+          <>
+            {/* Header */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
+                <p className="text-gray-600 mt-1">
+                  Manage staff information, skills, and scheduling preferences
+                </p>
+              </div>
+              <div className="flex space-x-3">
+                <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Employee
+                </button>
+                <button className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Bulk Import
+                </button>
+                <button className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </button>
+              </div>
+            </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -788,8 +680,10 @@ export const AllEmployees: React.FC = () => {
             )}
           </div>
         )}
-      </div>
-  );
+            </>
+          )}
+        </div>
+    );
 };
 
 export default AllEmployees;

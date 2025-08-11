@@ -11,11 +11,11 @@ import {
 } from 'lucide-react';
 
 interface Skill {
-  id: number;
-  skill_name: string;
+  id: string;
+  skillName: string;
   description: string;
-  skill_level: string;
-  status: boolean; 
+  skillLevel: string;
+  active: boolean; 
 }
 
 export const SkillsManagement: React.FC = () => {
@@ -25,22 +25,22 @@ export const SkillsManagement: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
-  const [selectedSkills, setSelectedSkills] = useState<number[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const skills: Skill[] = [
-    { id: 1, skill_name: 'Cardiac Resuscitation', description: 'Basic life support for cardiac arrest', skill_level: 'Advanced', status: true },
-    { id: 2, skill_name: 'Advanced Cardiac Life Support', description: 'Advanced techniques for cardiac emergencies', skill_level: 'Expert', status: true },
-    { id: 3, skill_name: 'Wound Care Management', description: 'Techniques for managing and treating wounds', skill_level: 'Intermediate', status: false },
-    { id: 4, skill_name: 'Emergency Response Protocols', description: 'Protocols for emergency situations', skill_level: 'Basic', status: true },
-    { id: 5, skill_name: 'Patient Assessment Skills', description: 'Skills for assessing patient conditions', skill_level: 'Advanced', status: false }
+    { id: "123e4567-e89b-12d3-a456-426655440001", skillName: 'Cardiac Resuscitation', description: 'Basic life support for cardiac arrest', skillLevel: 'Advanced', active: true },
+    { id: "123e4567-e89b-12d3-a456-426655440002", skillName: 'Advanced Cardiac Life Support', description: 'Advanced techniques for cardiac emergencies', skillLevel: 'Expert', active: true },
+    { id: "123e4567-e89b-12d3-a456-426655440003", skillName: 'Wound Care Management', description: 'Techniques for managing and treating wounds', skillLevel: 'Intermediate', active: false },
+    { id: "123e4567-e89b-12d3-a456-426655440004", skillName: 'Emergency Response Protocols', description: 'Protocols for emergency situations', skillLevel: 'Basic', active: true },
+    { id: "123e4567-e89b-12d3-a456-426655440005", skillName: 'Patient Assessment Skills', description: 'Skills for assessing patient conditions', skillLevel: 'Advanced', active: false }
   ];
 
   const filteredSkills = skills.filter(skill => {
     const matchesSearch =
-      skill.skill_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      skill.skillName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       skill.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesLevel = levelFilter === 'all' || skill.skill_level === levelFilter;
-    const matchesStatus = statusFilter === 'all' || skill.status === (statusFilter === 'Active');
+    const matchesLevel = levelFilter === 'all' || skill.skillLevel === levelFilter;
+    const matchesStatus = statusFilter === 'all' || skill.active === (statusFilter === 'Active');
     return matchesSearch && matchesLevel && matchesStatus;
   });
 
@@ -62,14 +62,14 @@ export const SkillsManagement: React.FC = () => {
     }
   };
 
-  const toggleSkillSelection = (skillId: number) => {
+  const toggleSkillSelection = (skillId: string) => {
     setSelectedSkills(prev =>
       prev.includes(skillId) ? prev.filter(id => id !== skillId) : [...prev, skillId]
     );
   };
 
   const getTotalSkills = () => skills.length;
-  const getActiveSkills = () => skills.filter(s => s.status === true).length;
+  const getActiveSkills = () => skills.filter(s => s.active === true).length;
 
   return (
     <div className="p-6 space-y-6">
@@ -187,15 +187,15 @@ export const SkillsManagement: React.FC = () => {
                     onChange={() => toggleSkillSelection(skill.id)}
                   />
                 </td>
-                <td className="px-6 py-4">{skill.skill_name}</td>
+                <td className="px-6 py-4">{skill.skillName}</td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getLevelColor(skill.skill_level)}`}>
-                    {skill.skill_level}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getLevelColor(skill.skillLevel)}`}>
+                    {skill.skillLevel}
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(skill.status)}`}>
-                    {skill.status}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(skill.active)}`}>
+                    {skill.active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td className="px-6 py-4 space-x-2">
@@ -225,7 +225,7 @@ export const SkillsManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Skill Name</label>
                 <input
                   type="text"
-                  defaultValue={editingSkill?.skill_name}
+                  defaultValue={editingSkill?.skillName}
                   className="w-full border rounded-lg px-3 py-2"
                   placeholder="Enter skill name"
                 />
@@ -241,7 +241,7 @@ export const SkillsManagement: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Level</label>
-                  <select defaultValue={editingSkill?.skill_level} className="w-full border rounded-lg px-3 py-2">
+                  <select defaultValue={editingSkill?.skillLevel} className="w-full border rounded-lg px-3 py-2">
                     <option value="Basic">Basic</option>
                     <option value="Intermediate">Intermediate</option>
                     <option value="Advanced">Advanced</option>
@@ -250,7 +250,7 @@ export const SkillsManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select defaultValue={editingSkill?.status ? 'Active' : 'Inactive'} className="w-full border rounded-lg px-3 py-2">
+                  <select defaultValue={editingSkill?.active ? 'Active' : 'Inactive'} className="w-full border rounded-lg px-3 py-2">
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                   </select>
