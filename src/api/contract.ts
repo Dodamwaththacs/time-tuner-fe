@@ -1,31 +1,37 @@
 const organizationId = "123e4567-e89b-12d3-a456-426655440001";
 
-// Skill API types and functions
-export interface Skill {
+// Contract API types and functions
+export interface ContractType {
   id: string;
-  skillName: string;
+  contractName: string;
+  maxHourPerWeek: number;
+  maxShiftsPerWeek: number;
+  maxConsecutiveDays: number;
+  minRestHours: number;
   description: string;
-  skillLevel: string;
   active: boolean;
 }
 
-export interface CreateSkillRequest {
-  skillName: string;
+export interface CreateContractRequest {
+  contractName: string;
+  maxHourPerWeek: number;
+  maxShiftsPerWeek: number;
+  maxConsecutiveDays: number;
+  minRestHours: number;
   description: string;
-  skillLevel: string;
   active: boolean;
 }
 
 // API functions
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
-export const skillAPI = {
+export const contractAPI = {
   /**
-   * Get all skills for an organization
+   * Get all contract types for an organization
    */
-  async getAllSkills(): Promise<Skill[]> {
+  async getAllContractTypes(): Promise<ContractType[]> {
     try {
-      const response = await fetch(`${BASE_URL}/skills/${organizationId}/organization`, {
+      const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/organization`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -41,17 +47,17 @@ export const skillAPI = {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Error fetching skills:', error);
+      console.error('Error fetching contract types:', error);
       throw error;
     }
   },
 
   /**
-   * Get skill by ID
+   * Get contract type by ID
    */
-  async getById(skillId: string): Promise<Skill> {
+  async getById(contractId: string): Promise<ContractType> {
     try {
-      const response = await fetch(`${BASE_URL}/skills/${organizationId}/${skillId}`, {
+      const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/${contractId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -65,17 +71,17 @@ export const skillAPI = {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Error fetching skill:', error);
+      console.error('Error fetching contract type:', error);
       throw error;
     }
   },
 
   /**
-   * Create a new skill
+   * Create a new contract type
    */
-  async create(data: CreateSkillRequest): Promise<{ success: boolean; skill: Skill }> {
+  async create(data: CreateContractRequest): Promise<{ success: boolean; contractType: ContractType }> {
     try {
-      const response = await fetch(`${BASE_URL}/skills/${organizationId}`, {
+      const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,17 +96,17 @@ export const skillAPI = {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Error creating skill:', error);
+      console.error('Error creating contract type:', error);
       throw error;
     }
   },
 
   /**
-   * Update skill
+   * Update contract type
    */
-  async update(skillId: string, data: Partial<CreateSkillRequest>): Promise<{ success: boolean; skill: Skill }> {
+  async update(contractId: string, data: Partial<CreateContractRequest>): Promise<{ success: boolean; contractType: ContractType }> {
     try {
-      const response = await fetch(`${BASE_URL}/skills/${organizationId}/${skillId}`, {
+      const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/${contractId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -115,17 +121,17 @@ export const skillAPI = {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Error updating skill:', error);
+      console.error('Error updating contract type:', error);
       throw error;
     }
   },
 
   /**
-   * Delete skill
+   * Delete contract type
    */
-  async delete(skillId: string): Promise<{ success: boolean; message?: string }> {
+  async delete(contractId: string): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${BASE_URL}/skills/${organizationId}/${skillId}`, {
+      const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/${contractId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -139,7 +145,7 @@ export const skillAPI = {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Error deleting skill:', error);
+      console.error('Error deleting contract type:', error);
       throw error;
     }
   },

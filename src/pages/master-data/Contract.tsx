@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import {
   Plus,
   Edit,
@@ -7,14 +7,16 @@ import {
   Download,
   Upload
 } from 'lucide-react';
+import { contractAPI } from '../../api/contract';
+
 
 interface ShiftTemplate {
-  id: number;
-  contract_name: string;
-  max_hours_per_week: number;
-  max_shifts_per_week: number;
-  max_consecutive_days: number;
-  min_rest_hours: number;
+  id: string;
+  contractName: string;
+  maxHourPerWeek: number;
+  maxShiftsPerWeek: number;
+  maxConsecutiveDays: number;
+  minRestHours: number;
   description: string;
   active: boolean;
 }
@@ -23,20 +25,28 @@ export const Contract: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ShiftTemplate | null>(null);
-  const [selectedTemplates, setSelectedTemplates] = useState<number[]>([]);
+  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
+  const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
 
-  const shiftTemplates: ShiftTemplate[] = [
-    { id: 1, contract_name: 'Full-Time Contract', max_hours_per_week: 40, max_shifts_per_week: 5, max_consecutive_days: 6, min_rest_hours: 12, description: 'Standard full-time contract', active: true },
-    { id: 2, contract_name: 'Part-Time Contract', max_hours_per_week: 20, max_shifts_per_week: 3, max_consecutive_days: 5, min_rest_hours: 10, description: 'Standard part-time contract', active: true },
-    { id: 3, contract_name: 'Temporary Contract', max_hours_per_week: 30, max_shifts_per_week: 4, max_consecutive_days: 7, min_rest_hours: 8, description: 'Temporary contract for seasonal work', active: false },
-  ];
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const response = await contractAPI.getAllContractTypes();
+        setShiftTemplates(response);
+      } catch (error) {
+        console.error('Error fetching shift templates:', error);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
 
   const filteredTemplates = shiftTemplates.filter(template =>
-    template.contract_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.contractName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     template.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const toggleSelection = (id: number) => {
+  const toggleSelection = (id: string) => {
     setSelectedTemplates(prev =>
       prev.includes(id) ? prev.filter(tid => tid !== id) : [...prev, id]
     );
@@ -112,11 +122,11 @@ export const Contract: React.FC = () => {
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{template.contract_name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{template.max_hours_per_week}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{template.max_shifts_per_week}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{template.max_consecutive_days}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{template.min_rest_hours}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{template.contractName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{template.maxHourPerWeek}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{template.maxShiftsPerWeek}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{template.maxConsecutiveDays}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{template.minRestHours}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{template.description}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${
@@ -155,31 +165,31 @@ export const Contract: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Contract Name" 
-                defaultValue={editingTemplate?.contract_name} 
+                defaultValue={editingTemplate?.contractName} 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <input 
                 type="number" 
                 placeholder="Max Hours/Week" 
-                defaultValue={editingTemplate?.max_hours_per_week} 
+                defaultValue={editingTemplate?.maxHourPerWeek} 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <input 
                 type="number" 
                 placeholder="Max Shifts/Week" 
-                defaultValue={editingTemplate?.max_shifts_per_week} 
+                defaultValue={editingTemplate?.maxShiftsPerWeek} 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <input 
                 type="number" 
                 placeholder="Max Consecutive Days" 
-                defaultValue={editingTemplate?.max_consecutive_days} 
+                defaultValue={editingTemplate?.maxConsecutiveDays} 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <input 
                 type="number" 
                 placeholder="Min Rest Hours" 
-                defaultValue={editingTemplate?.min_rest_hours} 
+                defaultValue={editingTemplate?.minRestHours} 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <textarea 

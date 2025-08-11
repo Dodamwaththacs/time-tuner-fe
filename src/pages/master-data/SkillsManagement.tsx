@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Award, 
   Plus, 
@@ -7,18 +7,18 @@ import {
   Search, 
   Filter, 
   MoreVertical, 
-  CheckCircle 
+  CheckCircle,
+  Loader,
+  AlertCircle
 } from 'lucide-react';
-
-interface Skill {
-  id: string;
-  skillName: string;
-  description: string;
-  skillLevel: string;
-  active: boolean; 
-}
+import { Layout } from '../../components/Layout';
+import { skillAPI, type Skill } from '../../api/skill';
 
 export const SkillsManagement: React.FC = () => {
+  // State management
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<'all' | 'Basic' | 'Intermediate' | 'Advanced' | 'Expert'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'Active' | 'Inactive' | 'Deprecated'>('all');
@@ -26,14 +26,26 @@ export const SkillsManagement: React.FC = () => {
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
-  const skills: Skill[] = [
-    { id: "123e4567-e89b-12d3-a456-426655440001", skillName: 'Cardiac Resuscitation', description: 'Basic life support for cardiac arrest', skillLevel: 'Advanced', active: true },
-    { id: "123e4567-e89b-12d3-a456-426655440002", skillName: 'Advanced Cardiac Life Support', description: 'Advanced techniques for cardiac emergencies', skillLevel: 'Expert', active: true },
-    { id: "123e4567-e89b-12d3-a456-426655440003", skillName: 'Wound Care Management', description: 'Techniques for managing and treating wounds', skillLevel: 'Intermediate', active: false },
-    { id: "123e4567-e89b-12d3-a456-426655440004", skillName: 'Emergency Response Protocols', description: 'Protocols for emergency situations', skillLevel: 'Basic', active: true },
-    { id: "123e4567-e89b-12d3-a456-426655440005", skillName: 'Patient Assessment Skills', description: 'Skills for assessing patient conditions', skillLevel: 'Advanced', active: false }
-  ];
+  // Fetch skills from API
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await skillAPI.getAllSkills();
+        setSkills(data);
+      } catch (err) {
+        console.error('Failed to fetch skills:', err);
+        setError('Failed to load skills. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSkills();
+  }, []);
 
   const filteredSkills = skills.filter(skill => {
     const matchesSearch =
@@ -43,6 +55,65 @@ export const SkillsManagement: React.FC = () => {
     const matchesStatus = statusFilter === 'all' || skill.active === (statusFilter === 'Active');
     return matchesSearch && matchesLevel && matchesStatus;
   });
+
+  // API handlers
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    const skillData = {
+      skillName: formData.get('skillName') as string,
+      description: formData.get('description') as string,
+      skillLevel: formData.get('skillLevel') as string,
+      active: formData.get('active') === 'Active',
+    };
+
+    try {
+      setSubmitting(true);
+      setError(null);
+      
+      if (editingSkill) {
+        // Update existing skill
+        const result = await skillAPI.update(editingSkill.id, skillData);
+        if (result.success) {
+          setSkills(prev => prev.map(skill => 
+            skill.id === editingSkill.id ? result.skill : skill
+          ));
+        }
+      } else {
+        // Create new skill
+        const result = await skillAPI.create(skillData);
+        if (result.success) {
+          setSkills(prev => [...prev, result.skill]);
+        }
+      }
+      
+      setShowAddSkill(false);
+      setEditingSkill(null);
+    } catch (err) {
+      console.error('Failed to save skill:', err);
+      setError('Failed to save skill. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (skillId: string) => {
+    if (!confirm('Are you sure you want to delete this skill?')) {
+      return;
+    }
+
+    try {
+      setError(null);
+      const result = await skillAPI.delete(skillId);
+      if (result.success) {
+        setSkills(prev => prev.filter(skill => skill.id !== skillId));
+      }
+    } catch (err) {
+      console.error('Failed to delete skill:', err);
+      setError('Failed to delete skill. Please try again.');
+    }
+  };
 
   const getStatusColor = (status: boolean) => {
     switch (status) {
@@ -72,18 +143,43 @@ export const SkillsManagement: React.FC = () => {
   const getActiveSkills = () => skills.filter(s => s.active === true).length;
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Skills Management</h1>
-        <button
-          onClick={() => setShowAddSkill(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Skill
-        </button>
-      </div>
+      <div className="p-6 space-y-6">
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+              <span className="text-red-800 font-medium">Error</span>
+            </div>
+            <p className="text-red-700 mt-1">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader className="w-8 h-8 animate-spin text-blue-600 mr-3" />
+            <span className="text-lg text-gray-600">Loading skills...</span>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="flex justify-between items-center">
+              <h1 className="text-3xl font-bold text-gray-900">Skills Management</h1>
+              <button
+                onClick={() => setShowAddSkill(true)}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Skill
+              </button>
+            </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -202,7 +298,10 @@ export const SkillsManagement: React.FC = () => {
                   <button onClick={() => setEditingSkill(skill)} className="text-blue-600">
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button className="text-red-600">
+                  <button 
+                    onClick={() => handleDelete(skill.id)}
+                    className="text-red-600"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                   <button className="text-gray-600">
@@ -220,28 +319,38 @@ export const SkillsManagement: React.FC = () => {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
             <h3 className="text-lg font-semibold mb-4">{editingSkill ? 'Edit Skill' : 'Add Skill'}</h3>
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Skill Name</label>
                 <input
                   type="text"
+                  name="skillName"
                   defaultValue={editingSkill?.skillName}
+                  required
                   className="w-full border rounded-lg px-3 py-2"
                   placeholder="Enter skill name"
+                  disabled={submitting}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Description</label>
                 <textarea
+                  name="description"
                   defaultValue={editingSkill?.description}
                   className="w-full border rounded-lg px-3 py-2"
                   placeholder="Enter description"
+                  disabled={submitting}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Level</label>
-                  <select defaultValue={editingSkill?.skillLevel} className="w-full border rounded-lg px-3 py-2">
+                  <select 
+                    name="skillLevel"
+                    defaultValue={editingSkill?.skillLevel} 
+                    className="w-full border rounded-lg px-3 py-2"
+                    disabled={submitting}
+                  >
                     <option value="Basic">Basic</option>
                     <option value="Intermediate">Intermediate</option>
                     <option value="Advanced">Advanced</option>
@@ -250,7 +359,12 @@ export const SkillsManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select defaultValue={editingSkill?.active ? 'Active' : 'Inactive'} className="w-full border rounded-lg px-3 py-2">
+                  <select 
+                    name="active"
+                    defaultValue={editingSkill?.active ? 'Active' : 'Inactive'} 
+                    className="w-full border rounded-lg px-3 py-2"
+                    disabled={submitting}
+                  >
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                   </select>
@@ -264,17 +378,34 @@ export const SkillsManagement: React.FC = () => {
                     setEditingSkill(null);
                   }}
                   className="px-4 py-2 border rounded-lg"
+                  disabled={submitting}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-                  {editingSkill ? 'Update' : 'Create'} Skill
+                <button 
+                  type="submit" 
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin mr-2" />
+                      {editingSkill ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      {editingSkill ? 'Update' : 'Create'} Skill
+                    </>
+                  )}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+          </>
+        )}
+      </div>
   );
 };
