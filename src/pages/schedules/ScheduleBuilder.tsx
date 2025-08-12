@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   Clock,
@@ -14,7 +14,6 @@ import {
   EyeOff,
   Star,
   Shield,
-  Award,
   CheckCircle
 } from "lucide-react";
 
@@ -23,11 +22,11 @@ interface Shift {
   id: number;
   date: string;
   shiftTypeId: number;
-  departmentId: number;
+  departmentId: string;
   requiredRoleId: number;
   requiredEmployees: number;
   priority: number;
-  notes?: string;
+  notes: string;
   minExperience: number;
   maxConsecutiveDays: number;
   allowOvertime: boolean;
@@ -37,67 +36,97 @@ interface Shift {
     count: number;
     mandatory: boolean;
   }[];
-  costCenter?: string;
+  costCenter: string;
   status: "draft" | "approved" | "published";
 }
+
+import { departmentAPI } from "../../api/department";
+import { shiftAPI } from "../../api/shiftType";
+import type { ShiftType } from "../../api/shiftType";
+import type { Department } from "../../api/department";
+
+
 
 export const ScheduleBuilder: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState("2024-03-04");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [currentView, setCurrentView] = useState("form"); // "form" or "calendar"
   const [currentMonth, setCurrentMonth] = useState(new Date(2024, 2, 1)); // March 2024
-  const [editingShift, setEditingShift] = useState(null);
   const [showDetails, setShowDetails] = useState<Record<number, boolean>>({});
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([]);
 
-  // Sample data based on the database example
-  const departments = [
-    { id: 1, name: "Emergency Room", location: "Building A - Floor 1", color: "bg-red-100 text-red-800" },
-    { id: 2, name: "Intensive Care Unit", location: "Building A - Floor 3", color: "bg-purple-100 text-purple-800" },
-    { id: 3, name: "General Surgery", location: "Building B - Floor 2", color: "bg-blue-100 text-blue-800" },
-    { id: 4, name: "Pediatrics", location: "Building C - Floor 1", color: "bg-green-100 text-green-800" },
-  ];
 
-  const shiftTypes = [
-    {
-      id: 1,
-      name: "Day Shift",
-      startTime: "07:00",
-      endTime: "19:00",
-      duration: 12,
-      color: "bg-yellow-200"
-    },
-    {
-      id: 2,
-      name: "Night Shift",
-      startTime: "19:00",
-      endTime: "07:00",
-      duration: 12,
-      color: "bg-blue-200"
-    },
-    {
-      id: 3,
-      name: "Morning Shift",
-      startTime: "06:00",
-      endTime: "14:00",
-      duration: 8,
-      color: "bg-orange-200"
-    },
-    {
-      id: 4,
-      name: "Evening Shift",
-      startTime: "14:00",
-      endTime: "22:00",
-      duration: 8,
-      color: "bg-indigo-200"
-    },
-  ];
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const response = await departmentAPI.getAllByOrganization();
+      console.log("Fetched departments:", response);
+      setDepartments(response);
+    };
+
+    fetchDepartments();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchShiftTypes = async () => {
+      const response = await shiftAPI.getAllByOrganization();
+      console.log("Fetched shift types:", response);
+      setShiftTypes(response);
+    };
+
+    fetchShiftTypes();
+  }, []);
+
+const departmentColors = [
+  "bg-red-100 text-red-800",
+  "bg-blue-100 text-blue-800", 
+  "bg-green-100 text-green-800",
+  "bg-yellow-100 text-yellow-800",
+  "bg-purple-100 text-purple-800",
+  "bg-pink-100 text-pink-800",
+  "bg-indigo-100 text-indigo-800",
+  "bg-teal-100 text-teal-800",
+  "bg-orange-100 text-orange-800",
+  "bg-cyan-100 text-cyan-800",
+  "bg-lime-100 text-lime-800",
+  "bg-emerald-100 text-emerald-800"
+];
+
+
+const shiftTypeColors = [
+  "bg-yellow-200",
+  "bg-blue-200", 
+  "bg-orange-200",
+  "bg-indigo-200",
+  "bg-green-200",
+  "bg-purple-200",
+  "bg-pink-200",
+  "bg-teal-200",
+  "bg-red-200",
+  "bg-cyan-200",
+  "bg-lime-200",
+  "bg-emerald-200"
+];
+
+
+const getDepartmentColorByIndex = (departmentId: string, departments: any[]) => {
+  const index = departments.findIndex(dept => dept.id === departmentId);
+  return departmentColors[index % departmentColors.length];
+};
+
+const getShiftTypeColorByIndex = (shiftTypeId: number, shiftTypes: any[]) => {
+  const index = shiftTypes.findIndex(type => type.id === shiftTypeId);
+  return shiftTypeColors[index % shiftTypeColors.length];
+};
+
 
   const roles = [
-    { id: 1, name: "Registered Nurse", icon: "👩‍⚕️" },
-    { id: 2, name: "Doctor", icon: "👨‍⚕️" },
-    { id: 3, name: "Nursing Assistant", icon: "👩‍💼" },
-    { id: 4, name: "Specialist", icon: "🩺" },
-    { id: 5, name: "Charge Nurse", icon: "👩‍💼" },
+    { id: "123e4567-e89b-12d3-a456-426655440001", roleName: "Registered Nurse", icon: "👩‍⚕️" },
+    { id: "123e4567-e89b-12d3-a456-426655440002", roleName: "Doctor", icon: "👨‍⚕️" },
+    { id: "123e4567-e89b-12d3-a456-426655440003", roleName: "Nursing Assistant", icon: "👩‍💼" },
+    { id: "123e4567-e89b-12d3-a456-426655440004", roleName: "Specialist", icon: "🩺" },
+    { id: "123e4567-e89b-12d3-a456-426655440005", roleName: "Charge Nurse", icon: "👩‍💼" },
   ];
 
   const skills = [
@@ -111,12 +140,12 @@ export const ScheduleBuilder: React.FC = () => {
     { id: 8, name: "Medication Management", level: "ADVANCED", icon: "💊" },
   ];
 
-  const [shifts, setShifts] = useState([
+  const [shifts, setShifts] = useState<Shift[]>([
     {
       id: 1,
       date: "2024-03-04",
       shiftTypeId: 1,
-      departmentId: 1,
+      departmentId: "123e4567-e89b-12d3-a456-426655440001",
       requiredRoleId: 1,
       requiredEmployees: 2,
       priority: 1,
@@ -136,7 +165,7 @@ export const ScheduleBuilder: React.FC = () => {
       id: 2,
       date: "2024-03-04",
       shiftTypeId: 2,
-      departmentId: 1,
+      departmentId: "123e4567-e89b-12d3-a456-426655440001",
       requiredRoleId: 1,
       requiredEmployees: 2,
       priority: 1,
@@ -155,7 +184,7 @@ export const ScheduleBuilder: React.FC = () => {
       id: 3,
       date: "2024-03-05",
       shiftTypeId: 1,
-      departmentId: 2,
+      departmentId: "123e4567-e89b-12d3-a456-426655440002",
       requiredRoleId: 1,
       requiredEmployees: 3,
       priority: 2,
@@ -173,10 +202,10 @@ export const ScheduleBuilder: React.FC = () => {
     },
   ]);
 
-  const [newShift, setNewShift] = useState({
+  const [newShift, setNewShift] = useState<Omit<Shift, 'id'>>({
     date: selectedDate,
     shiftTypeId: 1,
-    departmentId: 1,
+    departmentId: "123e4567-e89b-12d3-a456-426655440001",
     requiredRoleId: 1,
     requiredEmployees: 1,
     priority: 1,
@@ -191,7 +220,7 @@ export const ScheduleBuilder: React.FC = () => {
   });
 
   const addShift = () => {
-    const shift = {
+    const shift: Shift = {
       ...newShift,
       id: Date.now(), // Better ID generation
     };
@@ -199,7 +228,7 @@ export const ScheduleBuilder: React.FC = () => {
     setNewShift({
       date: selectedDate,
       shiftTypeId: 1,
-      departmentId: 1,
+      departmentId: "123e4567-e89b-12d3-a456-426655440001",
       requiredRoleId: 1,
       requiredEmployees: 1,
       priority: 1,
@@ -220,9 +249,9 @@ export const ScheduleBuilder: React.FC = () => {
       ...shift,
       id: Date.now(),
       date: selectedDate,
-      status: "draft" as const,
-      notes: shift.notes || "",
-      costCenter: shift.costCenter || ""
+      status: "draft",
+      notes: shift.notes,
+      costCenter: shift.costCenter
     };
     setShifts([...shifts, newShiftData]);
   };
@@ -240,24 +269,24 @@ export const ScheduleBuilder: React.FC = () => {
     }));
   };
 
-  const getDepartmentName = (id) =>
-    departments.find((d) => d.id === id)?.name || "";
-  const getDepartmentColor = (id) =>
-    departments.find((d) => d.id === id)?.color || "bg-gray-100 text-gray-800";
-  const getShiftTypeName = (id) =>
-    shiftTypes.find((s) => s.id === id)?.name || "";
-  const getShiftTypeColor = (id) =>
-    shiftTypes.find((s) => s.id === id)?.color || "bg-gray-200";
-  const getRoleName = (id) =>
-    roles.find((r) => r.id === id)?.name || "";
-  const getRoleIcon = (id) =>
+  const getDepartmentName = (id: string) =>
+    departments.find((d) => d.id === id)?.departmentName || "";
+  const getDepartmentColor = (id: string) => getDepartmentColorByIndex(id, departments);
+  const getShiftTypeName = (id: string) =>
+    shiftTypes.find((s) => s.id === id)?.shiftName || "";
+  const getShiftTypeColor = (id: number) =>
+    getShiftTypeColorByIndex(id, shiftTypes);
+
+  const getRoleName = (id: string) =>
+    roles.find((r) => r.id === id)?.roleName || "";
+  const getRoleIcon = (id: string) =>
     roles.find((r) => r.id === id)?.icon || "👤";
-  const getSkillName = (id) =>
+  const getSkillName = (id: number) =>
     skills.find((s) => s.id === id)?.name || "";
-  const getSkillIcon = (id) =>
+  const getSkillIcon = (id: number) =>
     skills.find((s) => s.id === id)?.icon || "🔧";
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: number) => {
     switch (priority) {
       case 1: return "bg-red-100 text-red-800 border-red-200";
       case 2: return "bg-yellow-100 text-yellow-800 border-yellow-200";
@@ -265,7 +294,7 @@ export const ScheduleBuilder: React.FC = () => {
     }
   };
 
-  const getPriorityText = (priority) => {
+  const getPriorityText = (priority: number) => {
     switch (priority) {
       case 1: return "High";
       case 2: return "Medium";
@@ -273,7 +302,7 @@ export const ScheduleBuilder: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "draft": return "bg-gray-100 text-gray-800";
       case "approved": return "bg-blue-100 text-blue-800";
@@ -283,23 +312,23 @@ export const ScheduleBuilder: React.FC = () => {
   };
 
   // Calendar functions
-  const getDaysInMonth = (date) => {
+  const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
 
-  const getFirstDayOfMonth = (date) => {
+  const getFirstDayOfMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
 
-  const formatDate = (year, month, day) => {
+  const formatDate = (year: number, month: number, day: number) => {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
-  const getShiftsForDate = (dateStr) => {
+  const getShiftsForDate = (dateStr: string) => {
     return shifts.filter(shift => shift.date === dateStr);
   };
 
-  const navigateMonth = (direction) => {
+  const navigateMonth = (direction: number) => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + direction, 1));
   };
 
@@ -333,15 +362,15 @@ export const ScheduleBuilder: React.FC = () => {
             {day}
           </div>
           <div className="space-y-1">
-            {dayShifts.slice(0, 3).map((shift, index) => (
+            {dayShifts.slice(0, 3).map((shift) => (
               <div
                 key={shift.id}
-                className={`text-xs p-1 rounded truncate ${getShiftTypeColor(shift.shiftTypeId)} ${getDepartmentColor(shift.departmentId)}`}
-                title={`${getShiftTypeName(shift.shiftTypeId)} - ${getDepartmentName(shift.departmentId)}`}
+                className={`text-xs p-1 rounded truncate ${getShiftTypeColorByIndex(shift.shiftTypeId, shiftTypes)} ${getDepartmentColor(shift.departmentId)}`}
+                title={`${getShiftTypeName(shift.shiftTypeId.toString())} - ${getDepartmentName(shift.departmentId)}`}
               >
                 <div className="flex items-center">
-                  <span className="mr-1">{getRoleIcon(shift.requiredRoleId)}</span>
-                  <span className="truncate">{getShiftTypeName(shift.shiftTypeId)}</span>
+                  <span className="mr-1">{getRoleIcon(shift.requiredRoleId.toString())}</span>
+                  <span className="truncate">{getShiftTypeName(shift.shiftTypeId.toString())}</span>
                 </div>
               </div>
             ))}
@@ -443,9 +472,9 @@ export const ScheduleBuilder: React.FC = () => {
                   {getShiftsForDate(selectedDate).map((shift) => (
                     <div key={shift.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                       <div className="flex items-center space-x-4">
-                        <span className="text-2xl">{getRoleIcon(shift.requiredRoleId)}</span>
+                        <span className="text-2xl">{getRoleIcon(shift.requiredRoleId.toString())}</span>
                         <div>
-                          <div className="font-medium">{getShiftTypeName(shift.shiftTypeId)}</div>
+                          <div className="font-medium">{getShiftTypeName(shift.shiftTypeId.toString())}</div>
                           <div className="text-sm text-gray-500">
                             {getDepartmentName(shift.departmentId)} • {shift.requiredEmployees} staff needed
                           </div>
@@ -519,7 +548,7 @@ export const ScheduleBuilder: React.FC = () => {
                 >
                   {shiftTypes.map((type) => (
                     <option key={type.id} value={type.id}>
-                      {type.name} ({type.startTime}-{type.endTime}) - {type.duration}hrs
+                      {type.shiftName} ({type.startTime}-{type.endTime}) - {type.durationHours}hrs
                     </option>
                   ))}
                 </select>
@@ -535,14 +564,14 @@ export const ScheduleBuilder: React.FC = () => {
                   onChange={(e) =>
                     setNewShift({
                       ...newShift,
-                      departmentId: parseInt(e.target.value),
+                      departmentId: e.target.value,
                     })
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
-                      {dept.name} - {dept.location}
+                      {dept.departmentName} - {dept.location}
                     </option>
                   ))}
                 </select>
@@ -565,7 +594,7 @@ export const ScheduleBuilder: React.FC = () => {
                 >
                   {roles.map((role) => (
                     <option key={role.id} value={role.id}>
-                      {role.icon} {role.name}
+                      {role.icon} {role.roleName}
                     </option>
                   ))}
                 </select>
@@ -860,7 +889,7 @@ export const ScheduleBuilder: React.FC = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-4 mb-3">
-                        <span className="text-2xl">{getRoleIcon(shift.requiredRoleId)}</span>
+                        <span className="text-2xl">{getRoleIcon(shift.requiredRoleId.toString())}</span>
                         <div className="flex items-center space-x-2">
                           <span
                             className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(
@@ -891,7 +920,7 @@ export const ScheduleBuilder: React.FC = () => {
                         </div>
                         <div className="flex items-center">
                           <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                          <span>{getShiftTypeName(shift.shiftTypeId)}</span>
+                          <span>{getShiftTypeName(shift.shiftTypeId.toString())}</span>
                         </div>
                         <div className="flex items-center">
                           <Building2 className="w-4 h-4 mr-2 text-gray-400" />
@@ -900,7 +929,7 @@ export const ScheduleBuilder: React.FC = () => {
                         <div className="flex items-center">
                           <Users className="w-4 h-4 mr-2 text-gray-400" />
                           <span>
-                            {shift.requiredEmployees} {getRoleName(shift.requiredRoleId)}
+                            {shift.requiredEmployees} {getRoleName(shift.requiredRoleId.toString())}
                             {shift.requiredEmployees > 1 ? 's' : ''}
                           </span>
                         </div>

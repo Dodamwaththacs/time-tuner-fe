@@ -8,6 +8,8 @@ export interface Department {
 }
 
 const API_BASE_URL = 'http://localhost:8080/api';
+const organizationId = "123e4567-e89b-12d3-a456-426655440001";
+
 
 export const departmentAPI = {
   create: async (departmentData: Omit<Department, 'id'>): Promise<Department> => {
@@ -21,7 +23,7 @@ export const departmentAPI = {
     return response.json();
   },
 
-  getAllByOrganization: async (organizationId: string): Promise<Department[]> => {
+  getAllByOrganization: async (): Promise<Department[]> => {
     const response = await fetch(`${API_BASE_URL}/departments/organization/${organizationId}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();

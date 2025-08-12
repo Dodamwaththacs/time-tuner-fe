@@ -10,6 +10,7 @@ import {
 import { contractAPI } from '../../api/contract';
 
 
+
 interface ShiftTemplate {
   id: string;
   contractName: string;

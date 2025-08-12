@@ -23,7 +23,7 @@ export const Departments: React.FC = () => {
     const fetchDepartments = async () => {
       try {
         setLoading(true);
-        const response = await departmentAPI.getAllByOrganization(organizationId);
+        const response = await departmentAPI.getAllByOrganization();
         setDepartments(response);
       } catch (error) {
         console.error("Error fetching departments:", error);
