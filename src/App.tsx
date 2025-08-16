@@ -8,7 +8,7 @@ import { Pricing } from './pages/Pricing';
 import { Registration }  from './pages/Registration';
 import { Projects } from './pages/Projects';
 import { Tasks } from './pages/Tasks';
-import { Team } from './pages/Team';
+import {  AllProfiles} from '../src/pages/team/index';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { Users } from './pages/Users';
@@ -22,6 +22,7 @@ import { SkillsManagement, ShiftTemplates, HolidayCalendar, Contract } from './p
 import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine,EnhancedScheduleBuilder} from './pages/schedules/index';
 import { EmployeeRoles,AddEmployee ,AllEmployees} from './pages/employee-management/index';
 import { Availability ,EmployeePreferences} from './pages/availability/index';
+import { TimeOff } from './pages/request-and-approvels/Time-off';
 // import { ShiftChangeRequestForm  } from './pages/ShiftManagement/ShiftChangeRequestForm';
 function App() {
   return (
@@ -69,12 +70,15 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+
+          // Team Management
           <Route 
-            path="/team" 
+            path="/team/profiles" 
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Team />
+                  <AllProfiles />
                 </Layout>
               </ProtectedRoute>
             } 
@@ -247,6 +251,19 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <HolidayCalendar />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+
+          {/* Requests and Approvals */}
+          <Route 
+            path="/approvals/timeoff" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <TimeOff />
                 </Layout>
               </ProtectedRoute>
             } 

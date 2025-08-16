@@ -14,52 +14,51 @@ import {
   EyeOff,
   Star,
   Shield,
-  CheckCircle,
+  CheckCircle
 } from "lucide-react";
 
-export interface Shift {
-  id: string; // Use string for UUIDs
-  shiftDate: string;
-  requiredEmployees: number;
-  priorityLevel: number;
-  notes: string;
-  createdAt?: string;
-  shiftType: string; // Make sure this matches what you're using
-  department: string;
-  requiredRole: string; // Make sure this matches what you're using
-  skillRequirements: {
-    id: string;
-    requiredCount: number;
-    mandatory: boolean;
-    skill: string;
-    shift: string;
-    role: string;
-  }[];
-  status: "draft" | "published";
-}
 
+interface Shift {
+  id: number;
+  date: string;
+  shiftTypeId: number;
+  departmentId: string;
+  requiredRoleId: number;
+  requiredEmployees: number;
+  priority: number;
+  notes: string;
+  minExperience: number;
+  maxConsecutiveDays: number;
+  allowOvertime: boolean;
+  breakDuration: number;
+  skillRequirements: {
+    skillId: number;
+    count: number;
+    mandatory: boolean;
+  }[];
+  costCenter: string;
+  status: "draft" | "approved" | "published";
+}
 
 import { departmentAPI } from "../../api/department";
 import { shiftAPI } from "../../api/shiftType";
 import { roleAPI } from "../../api/role";
-import { skillAPI } from "../../api/skill";
-import { createShiftAPI } from "../../api/createShift";
-import type { Skill } from "../../api/skill";
 import type { Role } from "../../api/role";
 import type { ShiftType } from "../../api/shiftType";
 import type { Department } from "../../api/department";
+
+
 
 export const ScheduleBuilder: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState("2024-03-04");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [currentView, setCurrentView] = useState("form"); // "form" or "calendar"
   const [currentMonth, setCurrentMonth] = useState(new Date(2024, 2, 1)); // March 2024
-  const [showDetails, setShowDetails] = useState<Record<string, boolean>>({});
+  const [showDetails, setShowDetails] = useState<Record<number, boolean>>({});
   const [departments, setDepartments] = useState<Department[]>([]);
   const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [shifts, setShifts] = useState<Shift[]>([]);
+
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -71,15 +70,6 @@ export const ScheduleBuilder: React.FC = () => {
     fetchDepartments();
   }, []);
 
-  useEffect(() => {
-    const fetchShifts = async () => {
-      const response = await createShiftAPI.getShifts();
-      console.log("Fetched shifts:", response);
-      setShifts(response);
-    };
-
-    fetchShifts();
-  }, []);
 
   useEffect(() => {
     const fetchShiftTypes = async () => {
@@ -101,318 +91,274 @@ export const ScheduleBuilder: React.FC = () => {
     fetchRoles();
   }, []);
 
-  useEffect(() => {
-    const fetchSkills = async () => {
-      const response = await skillAPI.getAllSkills();
-      console.log("Fetched skills:", response);
-      setSkills(response);
-    };
 
-    fetchSkills();
-  }, []);
+const departmentColors = [
+  "bg-red-100 text-red-800",
+  "bg-blue-100 text-blue-800", 
+  "bg-green-100 text-green-800",
+  "bg-yellow-100 text-yellow-800",
+  "bg-purple-100 text-purple-800",
+  "bg-pink-100 text-pink-800",
+  "bg-indigo-100 text-indigo-800",
+  "bg-teal-100 text-teal-800",
+  "bg-orange-100 text-orange-800",
+  "bg-cyan-100 text-cyan-800",
+  "bg-lime-100 text-lime-800",
+  "bg-emerald-100 text-emerald-800"
+];
 
-  const submitShift = async () => {
-    try {
-       await createShiftAPI.createShift(shifts);
-      const updatedShifts = await createShiftAPI.getShifts(); // Refresh shifts after creation
-      setShifts(updatedShifts);
-    } catch (error) {
-      console.error("Error creating shift:", error);
-    }
-  };
 
-  const departmentColors = [
-    "bg-red-100 text-red-800",
-    "bg-blue-100 text-blue-800",
-    "bg-green-100 text-green-800",
-    "bg-yellow-100 text-yellow-800",
-    "bg-purple-100 text-purple-800",
-    "bg-pink-100 text-pink-800",
-    "bg-indigo-100 text-indigo-800",
-    "bg-teal-100 text-teal-800",
-    "bg-orange-100 text-orange-800",
-    "bg-cyan-100 text-cyan-800",
-    "bg-lime-100 text-lime-800",
-    "bg-emerald-100 text-emerald-800",
+const shiftTypeColors = [
+  "bg-yellow-200",
+  "bg-blue-200", 
+  "bg-orange-200",
+  "bg-indigo-200",
+  "bg-green-200",
+  "bg-purple-200",
+  "bg-pink-200",
+  "bg-teal-200",
+  "bg-red-200",
+  "bg-cyan-200",
+  "bg-lime-200",
+  "bg-emerald-200"
+];
+
+
+const getDepartmentColorByIndex = (departmentId: string, departments: any[]) => {
+  const index = departments.findIndex(dept => dept.id === departmentId);
+  return departmentColors[index % departmentColors.length];
+};
+
+const getShiftTypeColorByIndex = (shiftTypeId: number, shiftTypes: any[]) => {
+  const index = shiftTypes.findIndex(type => type.id === shiftTypeId);
+  return shiftTypeColors[index % shiftTypeColors.length];
+};
+
+
+  // const roles = [
+  //   { id: "123e4567-e89b-12d3-a456-426655440001", roleName: "Registered Nurse" },
+  //   { id: "123e4567-e89b-12d3-a456-426655440002", roleName: "Doctor" },
+  //   { id: "123e4567-e89b-12d3-a456-426655440003", roleName: "Nursing Assistant" },
+  //   { id: "123e4567-e89b-12d3-a456-426655440004", roleName: "Specialist" },
+  //   { id: "123e4567-e89b-12d3-a456-426655440005", roleName: "Charge Nurse" },
+  // ];
+
+  const skills = [
+    { id: 1, skillName: "BLS Certification", skillLevel: "REQUIRED", icon: "🆘" },
+    { id: 2, skillName: "ACLS Certification", skillLevel: "ADVANCED", icon: "❤️" },
+    { id: 3, skillName: "Pediatric Care", skillLevel: "SPECIALIZED", icon: "🧸" },
+    { id: 4, skillName: "Critical Care", skillLevel: "ADVANCED", icon: "🏥" },
+    { id: 5, skillName: "Surgical Assistance", skillLevel: "SPECIALIZED", icon: "🔬" },
+    { id: 6, skillName: "Emergency Response", skillLevel: "REQUIRED", icon: "🚨" },
+    { id: 7, skillName: "Patient Education", skillLevel: "BASIC", icon: "📚" },
+    { id: 8, skillName: "Medication Management", skillLevel: "ADVANCED", icon: "💊" },
   ];
 
-  const shiftTypeColors = [
-    "bg-yellow-200",
-    "bg-blue-200",
-    "bg-orange-200",
-    "bg-indigo-200",
-    "bg-green-200",
-    "bg-purple-200",
-    "bg-pink-200",
-    "bg-teal-200",
-    "bg-red-200",
-    "bg-cyan-200",
-    "bg-lime-200",
-    "bg-emerald-200",
-  ];
+  const [shifts, setShifts] = useState<Shift[]>([
+    {
+      id: 1,
+      date: "2024-03-04",
+      shiftTypeId: 1,
+      departmentId: "123e4567-e89b-12d3-a456-426655440001",
+      requiredRoleId: 1,
+      requiredEmployees: 2,
+      priority: 1,
+      notes: "Monday ER day shift - expect high volume",
+      minExperience: 2,
+      maxConsecutiveDays: 3,
+      allowOvertime: true,
+      breakDuration: 30,
+      skillRequirements: [
+        { skillId: 1, count: 2, mandatory: true },
+        { skillId: 2, count: 1, mandatory: false }
+      ],
+      costCenter: "CC-001",
+      status: "draft"
+    },
+    {
+      id: 2,
+      date: "2024-03-04",
+      shiftTypeId: 2,
+      departmentId: "123e4567-e89b-12d3-a456-426655440001",
+      requiredRoleId: 1,
+      requiredEmployees: 2,
+      priority: 1,
+      notes: "Monday ER night shift",
+      minExperience: 1,
+      maxConsecutiveDays: 2,
+      allowOvertime: false,
+      breakDuration: 45,
+      skillRequirements: [
+        { skillId: 1, count: 2, mandatory: true }
+      ],
+      costCenter: "CC-001",
+      status: "approved"
+    },
+    {
+      id: 3,
+      date: "2024-03-05",
+      shiftTypeId: 1,
+      departmentId: "123e4567-e89b-12d3-a456-426655440002",
+      requiredRoleId: 1,
+      requiredEmployees: 3,
+      priority: 2,
+      notes: "Tuesday ICU day shift - critical patients",
+      minExperience: 3,
+      maxConsecutiveDays: 2,
+      allowOvertime: true,
+      breakDuration: 30,
+      skillRequirements: [
+        { skillId: 4, count: 2, mandatory: true },
+        { skillId: 2, count: 1, mandatory: true }
+      ],
+      costCenter: "CC-002",
+      status: "published"
+    },
+  ]);
 
-  const getDepartmentColorByIndex = (
-    departmentId: string,
-    departments: any[]
-  ) => {
-    const index = departments.findIndex((dept) => dept.id === departmentId);
-    return departmentColors[index % departmentColors.length];
-  };
-
-  const getShiftTypeColorByIndex = (shiftTypeId: string, shiftTypes: any[]) => {
-    const index = shiftTypes.findIndex((type) => type.id === shiftTypeId);
-    return shiftTypeColors[index % shiftTypeColors.length];
-  };
-
-  // Dynamic icon assignment by skill level
-  const getSkillIconByLevel = (
-    skillLevel: string,
-    skillName: string
-  ): string => {
-    const skillLevelIcons = {
-      REQUIRED: ["🆘", "🚨", "⚡", "🔴", "📋"],
-      ADVANCED: ["❤️", "🩺", "💊", "🔬", "⚕️"],
-      SPECIALIZED: ["🧸", "🔬", "🧬", "🎯", "🏆"],
-      BASIC: ["📚", "✏️", "📖", "💡", "📝"],
-    };
-
-    const icons = skillLevelIcons[
-      skillLevel as keyof typeof skillLevelIcons
-    ] || ["🔧"];
-
-    // Use skill name to generate consistent index
-    let hash = 0;
-    for (let i = 0; i < skillName.length; i++) {
-      const char = skillName.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-
-    return icons[Math.abs(hash) % icons.length];
-  };
-
-
-  const [newShift, setNewShift] = useState<Omit<Shift, "id">>({
-    shiftDate: selectedDate,
-    shiftType: "123e4567-e89b-12d3-a456-426655440001",
-    department: "123e4567-e89b-12d3-a456-426655440001",
-    requiredRole: "123e4567-e89b-12d3-a456-426655440001",
+  const [newShift, setNewShift] = useState<Omit<Shift, 'id'>>({
+    date: selectedDate,
+    shiftTypeId: 1,
+    departmentId: "123e4567-e89b-12d3-a456-426655440001",
+    requiredRoleId: 1,
     requiredEmployees: 1,
-    priorityLevel: 1,
+    priority: 1,
     notes: "",
+    minExperience: 0,
+    maxConsecutiveDays: 5,
+    allowOvertime: false,
+    breakDuration: 30,
     skillRequirements: [],
-    status: "draft",
+    costCenter: "",
+    status: "draft"
   });
 
   const addShift = () => {
     const shift: Shift = {
       ...newShift,
-      id: generateUniqueId(), // Generate a unique ID for the shift
+      id: Date.now(), // Better ID generation
     };
-
-    // Update shifts state
-    const updatedShifts = [...shifts, shift];
-    setShifts(updatedShifts);
-
-    // Reset form
+    setShifts([...shifts, shift]);
     setNewShift({
-      shiftDate: selectedDate,
-      shiftType: "123e4567-e89b-12d3-a456-426655440001",
-      department: "123e4567-e89b-12d3-a456-426655440001",
-      requiredRole: "123e4567-e89b-12d3-a456-426655440001", // Keep as string
+      date: selectedDate,
+      shiftTypeId: 1,
+      departmentId: "123e4567-e89b-12d3-a456-426655440001",
+      requiredRoleId: 1,
       requiredEmployees: 1,
-      priorityLevel: 1,
+      priority: 1,
       notes: "",
+      minExperience: 0,
+      maxConsecutiveDays: 5,
+      allowOvertime: false,
+      breakDuration: 30,
       skillRequirements: [],
-      status: "draft",
+      costCenter: "",
+      status: "draft"
     });
-
     setShowAdvanced(false);
-
-    // Log the updated shifts immediately
-    console.log("Shift added. New total:", updatedShifts.length);
   };
 
   const duplicateShift = (shift: Shift) => {
     const newShiftData: Shift = {
       ...shift,
-      id: generateUniqueId(),
-      shiftDate: selectedDate,
+      id: Date.now(),
+      date: selectedDate,
       status: "draft",
       notes: shift.notes,
+      costCenter: shift.costCenter
     };
     setShifts([...shifts, newShiftData]);
   };
 
-  const removeShift = (shift: Shift) => {
+  const removeShift = (id: number) => {
     if (window.confirm("Are you sure you want to delete this shift?")) {
-
-      if (shift.status ==="published") {
-        // If the shift is published, we need to delete it from the server
-        createShiftAPI.deleteShift(shift.id)
-          .then(() => {
-            // Remove the shift from the state
-            setShifts(shifts.filter((s) => s.id !== shift.id));
-          })
-          .catch((error) => {
-            console.error("Failed to delete shift:", error);
-          });
-      } else {
-        // If the shift is not published, we can remove it directly
-        setShifts(shifts.filter((s) => s.id !== shift.id));
-      }
+      setShifts(shifts.filter((shift) => shift.id !== id));
     }
   };
 
-  const toggleShiftDetails = (shiftId: string) => {
-    setShowDetails((prev) => ({
+  const toggleShiftDetails = (shiftId: number) => {
+    setShowDetails(prev => ({
       ...prev,
-      [shiftId]: !prev[shiftId],
+      [shiftId]: !prev[shiftId]
     }));
   };
 
   const getDepartmentName = (id: string) =>
     departments.find((d) => d.id === id)?.departmentName || "";
-  const getDepartmentColor = (id: string) =>
-    getDepartmentColorByIndex(id, departments);
+  const getDepartmentColor = (id: string) => getDepartmentColorByIndex(id, departments);
   const getShiftTypeName = (id: string) =>
     shiftTypes.find((s) => s.id === id)?.shiftName || "";
+  const getShiftTypeColor = (id: number) =>
+    getShiftTypeColorByIndex(id, shiftTypes);
 
   const getRoleName = (id: string) =>
     roles.find((r) => r.id === id)?.roleName || "";
-  const getSkillName = (id: string) =>
+  const getSkillName = (id: number) =>
     skills.find((s) => s.id === id)?.skillName || "";
-  const getSkillIcon = (id: string) => {
-    const skill = skills.find((s) => s.id === id);
-    return skill
-      ? getSkillIconByLevel(skill.skillLevel, skill.skillName)
-      : "🔧";
-  };
+  const getSkillIcon = (id: number) =>
+    skills.find((s) => s.id === id)?.icon || "🔧";
 
   const getPriorityColor = (priority: number) => {
     switch (priority) {
-      case 1:
-        return "bg-red-100 text-red-800 border-red-200";
-      case 2:
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      default:
-        return "bg-green-100 text-green-800 border-green-200";
+      case 1: return "bg-red-100 text-red-800 border-red-200";
+      case 2: return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      default: return "bg-green-100 text-green-800 border-green-200";
     }
   };
 
   const getPriorityText = (priority: number) => {
     switch (priority) {
-      case 1:
-        return "High";
-      case 2:
-        return "Medium";
-      default:
-        return "Low";
+      case 1: return "High";
+      case 2: return "Medium";
+      default: return "Low";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "draft":
-        return "bg-gray-100 text-gray-800";
-      case "published":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+      case "draft": return "bg-gray-100 text-gray-800";
+      case "approved": return "bg-blue-100 text-blue-800";
+      case "published": return "bg-green-100 text-green-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
   // Calendar functions
   const getDaysInMonth = (date: Date) => {
-
-
-    const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    console.log("Days in month:", daysInMonth);
-    return daysInMonth;
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
 
   const getFirstDayOfMonth = (date: Date) => {
-    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    console.log("First day of month:", firstDay);
-    return firstDay;
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   };
 
   const formatDate = (year: number, month: number, day: number) => {
-    return `${year}-${String(month + 1).padStart(2, "0")}-${String(
-      day
-    ).padStart(2, "0")}`;
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
   const getShiftsForDate = (dateStr: string) => {
-  const targetDate = new Date(dateStr);
-  const shiftsForDate = shifts.filter((shift) => {
-    const shiftDate = new Date(shift.shiftDate);
-    return (
-      shiftDate.getFullYear() === targetDate.getFullYear() &&
-      shiftDate.getMonth() === targetDate.getMonth() &&
-      shiftDate.getDate() === targetDate.getDate()
-    );
-  });
-  console.log("Shifts for date:", dateStr, shiftsForDate);
-  return shiftsForDate;
-};
+    return shifts.filter(shift => shift.date === dateStr);
+  };
 
   const navigateMonth = (direction: number) => {
-    setCurrentMonth(
-      new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth() + direction,
-        1
-      )
-    );
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + direction, 1));
   };
-
-  const generateUniqueId = (): string => {
-    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
-  };
-
-
-  useEffect(() => {
-  console.log("Shifts state changed:", shifts);
-}, [shifts]);
-
-useEffect(() => {
-  console.log("New shift state changed:", newShift);
-}, [newShift]);
 
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentMonth);
     const firstDay = getFirstDayOfMonth(currentMonth);
     const days = [];
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
 
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
-      days.push(
-        <div key={`empty-${i}`} className="h-32 border border-gray-200"></div>
-      );
+      days.push(<div key={`empty-${i}`} className="h-32 border border-gray-200"></div>);
     }
 
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = formatDate(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth(),
-        day
-      );
+      const dateStr = formatDate(currentMonth.getFullYear(), currentMonth.getMonth(), day);
       const dayShifts = getShiftsForDate(dateStr);
       const isSelected = dateStr === selectedDate;
 
@@ -420,34 +366,23 @@ useEffect(() => {
         <div
           key={day}
           className={`h-32 border border-gray-200 p-1 overflow-hidden cursor-pointer hover:bg-gray-50 ${
-            isSelected ? "bg-blue-50 border-blue-300" : ""
+            isSelected ? 'bg-blue-50 border-blue-300' : ''
           }`}
           onClick={() => setSelectedDate(dateStr)}
         >
-          <div
-            className={`text-sm font-medium mb-1 ${
-              isSelected ? "text-blue-600" : "text-gray-900"
-            }`}
-          >
+          <div className={`text-sm font-medium mb-1 ${isSelected ? 'text-blue-600' : 'text-gray-900'}`}>
             {day}
           </div>
           <div className="space-y-1">
             {dayShifts.slice(0, 3).map((shift) => (
               <div
                 key={shift.id}
-                className={`text-xs p-1 rounded truncate ${getShiftTypeColorByIndex(
-                  shift.shiftType,
-                  shiftTypes
-                )} ${getDepartmentColor(shift.department)}`}
-                title={`${getShiftTypeName(
-                  shift.shiftType.toString()
-                )} - ${getDepartmentName(shift.department)}`}
+                className={`text-xs p-1 rounded truncate ${getShiftTypeColorByIndex(shift.shiftTypeId, shiftTypes)} ${getDepartmentColor(shift.departmentId)}`}
+                title={`${getShiftTypeName(shift.shiftTypeId.toString())} - ${getDepartmentName(shift.departmentId)}`}
               >
-                <div className="flex items-center">
-                  <span className="truncate">
-                    {getShiftTypeName(shift.shiftType.toString())}
-                  </span>
-                </div>
+                              <div className="flex items-center">
+                <span className="truncate">{getShiftTypeName(shift.shiftTypeId.toString())}</span>
+              </div>
               </div>
             ))}
             {dayShifts.length > 3 && (
@@ -482,11 +417,8 @@ useEffect(() => {
           </div>
         </div>
         <div className="grid grid-cols-7 gap-0">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-            <div
-              key={day}
-              className="p-2 text-center text-sm font-medium text-gray-500 border-b border-gray-200"
-            >
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 border-b border-gray-200">
               {day}
             </div>
           ))}
@@ -532,46 +464,33 @@ useEffect(() => {
       {currentView === "calendar" ? (
         <div className="space-y-6">
           {renderCalendar()}
-
+          
           {/* Selected date details */}
           {selectedDate && (
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h3 className="text-lg font-semibold mb-4">
-                Shifts for{" "}
-                {new Date(selectedDate).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
+                Shifts for {new Date(selectedDate).toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
                 })}
               </h3>
               {getShiftsForDate(selectedDate).length === 0 ? (
-                <p className="text-gray-500">
-                  No shifts scheduled for this date.
-                </p>
+                <p className="text-gray-500">No shifts scheduled for this date.</p>
               ) : (
                 <div className="space-y-3">
                   {getShiftsForDate(selectedDate).map((shift) => (
-                    <div
-                      key={shift.id}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
-                    >
+                    <div key={shift.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div>
-                          <div className="font-medium">
-                            {getShiftTypeName(shift.shiftType.toString())}
-                          </div>
+                          <div className="font-medium">{getShiftTypeName(shift.shiftTypeId.toString())}</div>
                           <div className="text-sm text-gray-500">
-                            {getDepartmentName(shift.department)} •{" "}
-                            {shift.requiredEmployees} staff needed
+                            {getDepartmentName(shift.departmentId)} • {shift.requiredEmployees} staff needed
                           </div>
                         </div>
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(
-                            shift.priorityLevel
-                          )}`}
-                        >
-                          {getPriorityText(shift.priorityLevel)}
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(shift.priority)}`}>
+                          {getPriorityText(shift.priority)}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -583,7 +502,7 @@ useEffect(() => {
                           <Copy className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => removeShift(shift)}
+                          onClick={() => removeShift(shift.id)}
                           className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                           title="Delete shift"
                         >
@@ -604,7 +523,7 @@ useEffect(() => {
               <Plus className="w-5 h-5 mr-2" />
               Create New Shift
             </h2>
-
+            
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
@@ -614,9 +533,9 @@ useEffect(() => {
                 </label>
                 <input
                   type="date"
-                  value={newShift.shiftDate}
+                  value={newShift.date}
                   onChange={(e) =>
-                    setNewShift({ ...newShift, shiftDate: e.target.value })
+                    setNewShift({ ...newShift, date: e.target.value })
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -628,19 +547,18 @@ useEffect(() => {
                   Shift Type
                 </label>
                 <select
-                  value={newShift.shiftType}
+                  value={newShift.shiftTypeId}
                   onChange={(e) =>
                     setNewShift({
                       ...newShift,
-                      shiftType: e.target.value,
+                      shiftTypeId: parseInt(e.target.value),
                     })
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {shiftTypes.map((type) => (
                     <option key={type.id} value={type.id}>
-                      {type.shiftName} ({type.startTime}-{type.endTime}) -{" "}
-                      {type.durationHours}hrs
+                      {type.shiftName} ({type.startTime}-{type.endTime}) - {type.durationHours}hrs
                     </option>
                   ))}
                 </select>
@@ -652,11 +570,11 @@ useEffect(() => {
                   Department
                 </label>
                 <select
-                  value={newShift.department}
+                  value={newShift.departmentId}
                   onChange={(e) =>
                     setNewShift({
                       ...newShift,
-                      department: e.target.value,
+                      departmentId: e.target.value,
                     })
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -675,11 +593,11 @@ useEffect(() => {
                   Required Role
                 </label>
                 <select
-                  value={newShift.requiredRole}
+                  value={newShift.requiredRoleId}
                   onChange={(e) =>
                     setNewShift({
                       ...newShift,
-                      requiredRole: e.target.value, // Keep as string, don't convert to int then back to string
+                      requiredRoleId: parseInt(e.target.value),
                     })
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -717,11 +635,11 @@ useEffect(() => {
                   Priority Level
                 </label>
                 <select
-                  value={newShift.priorityLevel}
+                  value={newShift.priority}
                   onChange={(e) =>
                     setNewShift({
                       ...newShift,
-                      priorityLevel: parseInt(e.target.value),
+                      priority: parseInt(e.target.value),
                     })
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -753,16 +671,96 @@ useEffect(() => {
               onClick={() => setShowAdvanced(!showAdvanced)}
               className="mb-4 text-sm text-blue-600 hover:underline flex items-center"
             >
-              {showAdvanced ? (
-                <EyeOff className="w-4 h-4 mr-1" />
-              ) : (
-                <Eye className="w-4 h-4 mr-1" />
-              )}
+              {showAdvanced ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
               {showAdvanced ? "Hide Advanced Options" : "Show Advanced Options"}
             </button>
 
             {showAdvanced && (
               <div className="space-y-6 border-t pt-6">
+                {/* Experience and Constraints */}
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Award className="w-4 h-4 inline mr-1" />
+                      Min. Experience (years)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      value={newShift.minExperience}
+                      onChange={(e) =>
+                        setNewShift({ ...newShift, minExperience: parseInt(e.target.value) || 0 })
+                      }
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Max Consecutive Days
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={newShift.maxConsecutiveDays}
+                      onChange={(e) =>
+                        setNewShift({ ...newShift, maxConsecutiveDays: parseInt(e.target.value) || 1 })
+                      }
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Break Duration (minutes)
+                    </label>
+                    <select
+                      value={newShift.breakDuration}
+                      onChange={(e) =>
+                        setNewShift({ ...newShift, breakDuration: parseInt(e.target.value) })
+                      }
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value={15}>15 minutes</option>
+                      <option value={30}>30 minutes</option>
+                      <option value={45}>45 minutes</option>
+                      <option value={60}>60 minutes</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Cost Center
+                    </label>
+                    <input
+                      type="text"
+                      value={newShift.costCenter}
+                      onChange={(e) =>
+                        setNewShift({ ...newShift, costCenter: e.target.value })
+                      }
+                      placeholder="e.g., CC-001"
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div> */}
+
+                {/* Toggles */}
+                {/* <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newShift.allowOvertime}
+                      onChange={(e) =>
+                        setNewShift({ ...newShift, allowOvertime: e.target.checked })
+                      }
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Allow Overtime</span>
+                  </label>
+                </div> */}
+
                 {/* Required Skills */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -772,7 +770,7 @@ useEffect(() => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {skills.map((skill) => {
                       const current = newShift.skillRequirements.find(
-                        (s) => s.skill === skill.id
+                        (s) => s.skillId === skill.id
                       );
                       return (
                         <div
@@ -789,14 +787,7 @@ useEffect(() => {
                                     ...newShift,
                                     skillRequirements: [
                                       ...newShift.skillRequirements,
-                                      {
-                                        id: generateUniqueId(),
-                                        skill: skill.id,
-                                        requiredCount: 1,
-                                        mandatory: true,
-                                        role: newShift.requiredRole,
-                                        shift: newShift.shiftType.toString(),
-                                      },
+                                      { skillId: skill.id, count: 1, mandatory: true },
                                     ],
                                   });
                                 } else {
@@ -804,26 +795,17 @@ useEffect(() => {
                                     ...newShift,
                                     skillRequirements:
                                       newShift.skillRequirements.filter(
-                                        (s) => s.skill !== skill.id
+                                        (s) => s.skillId !== skill.id
                                       ),
                                   });
                                 }
                               }}
                               className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             />
-                            <span className="text-lg mr-2">
-                              {getSkillIconByLevel(
-                                skill.skillLevel,
-                                skill.skillName
-                              )}
-                            </span>
+                            <span className="text-lg mr-2">{skill.icon}</span>
                             <div>
-                              <div className="font-medium">
-                                {skill.skillName}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {skill.skillLevel}
-                              </div>
+                              <div className="font-medium">{skill.skillName}</div>
+                              <div className="text-xs text-gray-500">{skill.skillLevel}</div>
                             </div>
                           </label>
 
@@ -833,17 +815,15 @@ useEffect(() => {
                                 type="number"
                                 min={1}
                                 max={10}
-                                value={current.requiredCount}
+                                value={current.count}
                                 onChange={(e) => {
                                   const count = parseInt(e.target.value) || 1;
                                   setNewShift({
                                     ...newShift,
-                                    skillRequirements:
-                                      newShift.skillRequirements.map((s) =>
-                                        s.skill === skill.id
-                                          ? { ...s, count }
-                                          : s
-                                      ),
+                                    skillRequirements: newShift.skillRequirements.map(
+                                      (s) =>
+                                        s.skillId === skill.id ? { ...s, count } : s
+                                    ),
                                   });
                                 }}
                                 className="w-16 p-1 border border-gray-300 rounded-md text-sm"
@@ -854,16 +834,14 @@ useEffect(() => {
                                   type="checkbox"
                                   checked={current.mandatory}
                                   onChange={(e) => {
-                                    const count = parseInt(e.target.value) || 1;
                                     setNewShift({
                                       ...newShift,
-                                      skillRequirements:
-                                        newShift.skillRequirements.map(
-                                          (s) =>
-                                            s.skill === skill.id
-                                              ? { ...s, requiredCount: count }
-                                              : s // Fix: was 'count', should be 'requiredCount'
-                                        ),
+                                      skillRequirements: newShift.skillRequirements.map(
+                                        (s) =>
+                                          s.skillId === skill.id 
+                                            ? { ...s, mandatory: e.target.checked } 
+                                            : s
+                                      ),
                                     });
                                   }}
                                   className="mr-1"
@@ -885,8 +863,7 @@ useEffect(() => {
                 {newShift.skillRequirements.length > 0 && (
                   <span className="flex items-center">
                     <AlertCircle className="w-4 h-4 mr-1" />
-                    {newShift.skillRequirements.length} skill requirement(s)
-                    defined
+                    {newShift.skillRequirements.length} skill requirement(s) defined
                   </span>
                 )}
               </div>
@@ -906,17 +883,14 @@ useEffect(() => {
               <div>
                 <h2 className="text-xl font-semibold">Created Shifts</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  {shifts.length} shift{shifts.length !== 1 ? "s" : ""} defined
+                  {shifts.length} shift{shifts.length !== 1 ? 's' : ''} defined
                 </p>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="text-sm text-gray-500">Status Legend:</div>
-                <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
-                  Draft
-                </span>
-                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                  Published
-                </span>
+                <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Draft</span>
+                <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Approved</span>
+                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Published</span>
               </div>
             </div>
             <div className="divide-y divide-gray-200">
@@ -928,18 +902,13 @@ useEffect(() => {
                         <div className="flex items-center space-x-2">
                           <span
                             className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(
-                              shift.priorityLevel
+                              shift.priority
                             )}`}
                           >
-                            {getPriorityText(shift.priorityLevel)} Priority
+                            {getPriorityText(shift.priority)} Priority
                           </span>
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                              shift.status
-                            )}`}
-                          >
-                            {shift.status.charAt(0).toUpperCase() +
-                              shift.status.slice(1)}
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(shift.status)}`}>
+                            {shift.status.charAt(0).toUpperCase() + shift.status.slice(1)}
                           </span>
                           <span className="text-sm text-gray-500">
                             Shift #{shift.id}
@@ -951,32 +920,26 @@ useEffect(() => {
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-2 text-gray-400" />
                           <span className="font-medium">
-                            {new Date(shift.shiftDate).toLocaleDateString(
-                              "en-US",
-                              {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                              }
-                            )}
+                            {new Date(shift.date).toLocaleDateString('en-US', { 
+                              weekday: 'short', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
                           </span>
                         </div>
                         <div className="flex items-center">
                           <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                          <span>
-                            {getShiftTypeName(shift.shiftType.toString())}
-                          </span>
+                          <span>{getShiftTypeName(shift.shiftTypeId.toString())}</span>
                         </div>
                         <div className="flex items-center">
                           <Building2 className="w-4 h-4 mr-2 text-gray-400" />
-                          <span>{getDepartmentName(shift.department)}</span>
+                          <span>{getDepartmentName(shift.departmentId)}</span>
                         </div>
                         <div className="flex items-center">
                           <Users className="w-4 h-4 mr-2 text-gray-400" />
                           <span>
-                            {shift.requiredEmployees}{" "}
-                            {getRoleName(shift.requiredRole.toString())}
-                            {shift.requiredEmployees > 1 ? "s" : ""}
+                            {shift.requiredEmployees} {getRoleName(shift.requiredRoleId.toString())}
+                            {shift.requiredEmployees > 1 ? 's' : ''}
                           </span>
                         </div>
                       </div>
@@ -984,7 +947,7 @@ useEffect(() => {
                       {/* Advanced details */}
                       {showDetails[shift.id] && (
                         <div className="mt-4 p-4 bg-gray-50 rounded-lg text-sm">
-                          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                               <span className="font-medium text-gray-700">Min Experience:</span>
                               <span className="ml-2">{shift.minExperience} years</span>
@@ -1007,40 +970,28 @@ useEffect(() => {
                                 <span className="ml-2">{shift.costCenter}</span>
                               </div>
                             )}
-                          </div> */}
-
-                          {shift.skillRequirements &&
-                            shift.skillRequirements.length > 0 && (
-                              <div>
-                                <span className="font-medium text-gray-700 block mb-2">
-                                  Required Skills:
-                                </span>
-                                <div className="flex flex-wrap gap-2">
-                                  {shift.skillRequirements.map((req, index) => (
-                                    <span
-                                      key={index}
-                                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
-                                        req.mandatory
-                                          ? "bg-red-100 text-red-800"
-                                          : "bg-blue-100 text-blue-800"
-                                      }`}
-                                    >
-                                      <span className="mr-1">
-                                        {getSkillIcon(req.skill)}
-                                      </span>
-                                      {getSkillName(req.skill)} (
-                                      {req.requiredCount})
-                                      {req.mandatory && (
-                                        <span className="ml-1">*</span>
-                                      )}
-                                    </span>
-                                  ))}
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  * Mandatory requirement
-                                </div>
+                          </div>
+                          
+                          {shift.skillRequirements && shift.skillRequirements.length > 0 && (
+                            <div>
+                              <span className="font-medium text-gray-700 block mb-2">Required Skills:</span>
+                              <div className="flex flex-wrap gap-2">
+                                {shift.skillRequirements.map((req, index) => (
+                                  <span
+                                    key={index}
+                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                                      req.mandatory ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                                    }`}
+                                  >
+                                    <span className="mr-1">{getSkillIcon(req.skillId)}</span>
+                                    {getSkillName(req.skillId)} ({req.count})
+                                    {req.mandatory && <span className="ml-1">*</span>}
+                                  </span>
+                                ))}
                               </div>
-                            )}
+                              <div className="text-xs text-gray-500 mt-1">* Mandatory requirement</div>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -1058,17 +1009,9 @@ useEffect(() => {
                       <button
                         onClick={() => toggleShiftDetails(shift.id)}
                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                        title={
-                          showDetails[shift.id]
-                            ? "Hide details"
-                            : "Show details"
-                        }
+                        title={showDetails[shift.id] ? "Hide details" : "Show details"}
                       >
-                        {showDetails[shift.id] ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
+                        {showDetails[shift.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                       <button
                         onClick={() => duplicateShift(shift)}
@@ -1078,7 +1021,7 @@ useEffect(() => {
                         <Copy className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => removeShift(shift)}
+                        onClick={() => removeShift(shift.id)}
                         className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                         title="Delete shift"
                       >
@@ -1088,16 +1031,12 @@ useEffect(() => {
                   </div>
                 </div>
               ))}
-
+              
               {shifts.length === 0 && (
                 <div className="p-12 text-center">
                   <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No shifts created yet
-                  </h3>
-                  <p className="text-gray-500">
-                    Create your first shift using the form above.
-                  </p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No shifts created yet</h3>
+                  <p className="text-gray-500">Create your first shift using the form above.</p>
                 </div>
               )}
             </div>
@@ -1108,23 +1047,20 @@ useEffect(() => {
       {/* Save Actions */}
       <div className="flex justify-between items-center pt-6 border-t border-gray-200">
         <div className="text-sm text-gray-500">
-          Total shifts: {shifts.length} • High priority:{" "}
-          {shifts.filter((s) => s.priorityLevel === 1).length} • Draft:{" "}
-          {shifts.filter((s) => s.status === "draft").length}
+          Total shifts: {shifts.length} • 
+          High priority: {shifts.filter(s => s.priority === 1).length} • 
+          Draft: {shifts.filter(s => s.status === 'draft').length}
         </div>
         <div className="flex space-x-4">
           <button className="px-6 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
             Save as Draft
           </button>
-          <button
-            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center"
-            onClick={submitShift}
-          >
+          <button className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center">
             <CheckCircle className="w-4 h-4 mr-2" />
-            Create Schedule
+            Publish Schedule
           </button>
         </div>
       </div>
     </div>
   );
-};
+}

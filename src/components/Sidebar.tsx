@@ -130,7 +130,7 @@ const navItems: NavItem[] = [
   },
   {
     label: 'Requests & Approvals',
-    path: '/approvals',
+    path: '/approvals/timeoff',
     icon: ClipboardList,
     roles: ['manager'],
     subItems: [
