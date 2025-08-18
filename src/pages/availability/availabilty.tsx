@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { Calendar, Clock, Plus, X, AlertCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Calendar, Clock, Plus, X, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { availabilityAPI } from "../../api/availability";
 
 // TypeScript interfaces
 interface UnavailabilityFormData {
@@ -16,57 +17,9 @@ interface Unavailability extends UnavailabilityFormData {
 }
 
 export const Availability: React.FC = () => {
-  // Dummy data for demonstration
-  const dummyUnavailabilities: Unavailability[] = [
-    {
-      id: 1,
-      date: "2025-08-10",
-      startTime: "09:00",
-      endTime: "12:00",
-      reason: "Doctor appointment",
-      dateObj: new Date("2025-08-10"),
-      approved: true
-    },
-    {
-      id: 2,
-      date: "2025-08-15",
-      startTime: "14:00",
-      endTime: "17:00",
-      reason: "Personal leave",
-      dateObj: new Date("2025-08-15"),
-      approved: false
-    },
-    {
-      id: 3,
-      date: "2025-08-22",
-      startTime: "10:30",
-      endTime: "15:30",
-      reason: "Family commitment",
-      dateObj: new Date("2025-08-22"),
-      approved: true
-    },
-    {
-      id: 4,
-      date: "2025-08-28",
-      startTime: "08:00",
-      endTime: "11:00",
-      reason: "Medical checkup",
-      dateObj: new Date("2025-08-28"),
-      approved: false
-    },
-    {
-      id: 5,
-      date: "2025-09-05",
-      startTime: "13:00",
-      endTime: "16:00",
-      reason: "Training session",
-      dateObj: new Date("2025-09-05"),
-      approved: true
-    }
-  ];
-
-  const [unavailabilities, setUnavailabilities] = useState<Unavailability[]>(dummyUnavailabilities);
+  const [unavailabilities, setUnavailabilities] = useState<Unavailability[]>([]);
   const [showForm, setShowForm] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formData, setFormData] = useState<UnavailabilityFormData>({
     date: "",
     startTime: "",
@@ -74,6 +27,25 @@ export const Availability: React.FC = () => {
     reason: ""
   });
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      const availability = await availabilityAPI.getAvailabilityByUserId();
+      const transformedData = availability
+        .filter(item => item.availabilityType === 'UNAVAILABLE')
+        .map(item => ({
+          id: item.id || Date.now(),
+          date: item.availabilityDate,
+          startTime: item.startTime || '',
+          endTime: item.endTime || '',
+          reason: item.reason,
+          approved: item.approved,
+          dateObj: new Date(item.availabilityDate)
+        }));
+      setUnavailabilities(transformedData);
+    };
+    fetchAvailability();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
@@ -83,7 +55,7 @@ export const Availability: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (): void => {    
+  const handleSubmit = async (): Promise<void> => {    
     if (!formData.date || !formData.startTime || !formData.endTime || !formData.reason) {
       alert("Please fill in all fields");
       return;
@@ -94,15 +66,47 @@ export const Availability: React.FC = () => {
       return;
     }
 
-    const newUnavailability: Unavailability = {
-      id: Date.now(),
-      ...formData,
-      dateObj: new Date(formData.date)
-    };
+    setIsSubmitting(true);
 
-    setUnavailabilities(prev => [...prev, newUnavailability]);
-    setFormData({ date: "", startTime: "", endTime: "", reason: "" });
-    setShowForm(false);
+    try {
+      // Create availability object for API
+      // Convert date to LocalDateTime format (add T00:00:00 for midnight)
+      const dateTimeString = `${formData.date}T00:00:00`;
+      
+      const availabilityData = {
+        availabilityDate: dateTimeString,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        availabilityType: 'UNAVAILABLE',
+        reason: formData.reason,
+        createdAt: null,
+        employee: '123e4567-e89b-12d3-a456-426655440001' 
+      };
+
+      // Call the API to create availability
+      const createdAvailability = await availabilityAPI.createAvailability(availabilityData);
+
+      // Create local unavailability object for UI
+      const newUnavailability: Unavailability = {
+        id: createdAvailability.id || 0,
+        date: createdAvailability.availabilityDate,
+        startTime: createdAvailability.startTime,
+        endTime: createdAvailability.endTime || '',
+        reason: createdAvailability.reason,
+        dateObj: new Date(createdAvailability.availabilityDate)
+      };
+
+      setUnavailabilities(prev => [...prev, newUnavailability]);
+      setFormData({ date: "", startTime: "", endTime: "", reason: "" });
+      setShowForm(false);
+      
+      alert("Unavailability request submitted successfully!");
+    } catch (error) {
+      console.error('Error creating unavailability:', error);
+      alert("Failed to submit unavailability request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = (id: number): void => {
@@ -133,16 +137,31 @@ export const Availability: React.FC = () => {
   };
 
   const getUnavailabilitiesForDate = (day: number | null): Unavailability[] => {
-  if (!day) return [];
+    if (!day) return [];
 
-  const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
 
-  return unavailabilities.filter(unavail => {
-    const [year, month, date] = unavail.date.split("-").map(Number);
-    const unavailDate = new Date(year, month - 1, date); // Local date, no timezone shift
-    return unavailDate.toDateString() === targetDate.toDateString();
-  });
-};
+    return unavailabilities.filter(unavail => {
+      try {
+        // Handle LocalDateTime format (2025-08-18T00:00:00) and other formats
+        let unavailDate: Date;
+        
+        if (unavail.date.includes('T')) {
+          // LocalDateTime format from backend
+          unavailDate = new Date(unavail.date);
+        } else {
+          // Legacy YYYY-MM-DD format
+          const [year, month, date] = unavail.date.split("-").map(Number);
+          unavailDate = new Date(year, month - 1, date);
+        }
+        
+        return unavailDate.toDateString() === targetDate.toDateString();
+      } catch (error) {
+        console.error('Error parsing date:', unavail.date, error);
+        return false;
+      }
+    });
+  };
 
 
   const navigateMonth = (direction: number): void => {
@@ -193,27 +212,6 @@ export const Availability: React.FC = () => {
     }
   };
 
-  // Method to toggle approval status (for demo purposes)
-  const toggleApprovalStatus = (id: number): void => {
-    setUnavailabilities(prev => prev.map(unavail => {
-      if (unavail.id === id) {
-        const currentStatus = unavail.approved;
-        let newStatus: boolean | undefined;
-        
-        if (currentStatus === undefined) {
-          newStatus = true; // pending -> approved
-        } else if (currentStatus === true) {
-          newStatus = false; // approved -> rejected
-        } else {
-          newStatus = undefined; // rejected -> pending
-        }
-        
-        return { ...unavail, approved: newStatus };
-      }
-      return unavail;
-    }));
-  };
-
   const monthNames: string[] = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -225,7 +223,6 @@ export const Availability: React.FC = () => {
     <div className="max-w-6xl mx-auto p-6 bg-white">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-          <Calendar className="text-blue-600" />
           Roster Management
         </h1>
         <p className="text-gray-600">Manage your unavailability schedule</p>
@@ -257,7 +254,7 @@ export const Availability: React.FC = () => {
                 name="date"
                 value={formData.date}
                 onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-2 border border-gray-300 rounded-md"
                 required
               />
             </div>
@@ -273,7 +270,7 @@ export const Availability: React.FC = () => {
                 value={formData.reason}
                 onChange={handleInputChange}
                 placeholder="e.g., Medical appointment, Personal leave"
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-2 border border-gray-300 rounded-md"
                 required
               />
             </div>
@@ -288,7 +285,7 @@ export const Availability: React.FC = () => {
                 name="startTime"
                 value={formData.startTime}
                 onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-2 border border-gray-300 rounded-md"
                 required
               />
             </div>
@@ -303,7 +300,7 @@ export const Availability: React.FC = () => {
                 name="endTime"
                 value={formData.endTime}
                 onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-2 border border-gray-300 rounded-md"
                 required
               />
             </div>
@@ -311,14 +308,24 @@ export const Availability: React.FC = () => {
             <div className="md:col-span-2 flex gap-2">
               <button
                 onClick={handleSubmit}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors"
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded-md text-white ${
+                  isSubmitting 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
               >
-                Add Unavailability
+                {isSubmitting ? 'Submitting...' : 'Add Unavailability'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded-md text-white ${
+                  isSubmitting 
+                    ? 'bg-gray-300 cursor-not-allowed' 
+                    : 'bg-gray-500 hover:bg-gray-600'
+                }`}
               >
                 Cancel
               </button>
@@ -335,16 +342,17 @@ export const Availability: React.FC = () => {
             onClick={() => navigateMonth(-1)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            ←
+            <ChevronLeft size={20} />
           </button>
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Calendar size={20} />
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h2>
           <button
             onClick={() => navigateMonth(1)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            →
+            <ChevronRight size={20} />
           </button>
         </div>
 
@@ -387,11 +395,10 @@ export const Availability: React.FC = () => {
                               {formatTime(unavail.startTime)}-{formatTime(unavail.endTime)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
+                                                    <div className="flex items-center gap-1">
                             <span 
-                              className="text-xs font-bold cursor-pointer" 
+                              className="text-xs font-bold" 
                               title={`Status: ${getApprovalStatusText(unavail.approved)}`}
-                              onClick={() => toggleApprovalStatus(unavail.id)}
                             >
                               {getApprovalIcon(unavail.approved)}
                             </span>
@@ -436,9 +443,6 @@ export const Availability: React.FC = () => {
               <span>⏳ Pending</span>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Click on status icons to toggle between states (for demo purposes)
-          </p>
         </div>
       </div>
 
@@ -462,9 +466,8 @@ export const Availability: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <span 
-                          className={`px-2 py-1 text-xs font-semibold rounded-full cursor-pointer ${getApprovalStyle(unavail.approved)}`}
-                          title={`Click to change status: ${getApprovalStatusText(unavail.approved)}`}
-                          onClick={() => toggleApprovalStatus(unavail.id)}
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${getApprovalStyle(unavail.approved)}`}
+                          title={`Status: ${getApprovalStatusText(unavail.approved)}`}
                         >
                           {getApprovalIcon(unavail.approved)} {getApprovalStatusText(unavail.approved)}
                         </span>
@@ -483,7 +486,7 @@ export const Availability: React.FC = () => {
                   </button>
                 </div>
               ))}
-          </div>
+            </div>
         </div>
       )}
     </div>

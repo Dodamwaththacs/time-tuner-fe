@@ -1,64 +1,77 @@
-import React, { useState } from 'react';
-import { Calendar, Clock, User, CheckCircle, XCircle, Filter, List, CalendarDays } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar, Clock, User, CheckCircle, XCircle, Filter, List, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { employeeAvailabilityAPI } from '../../api/employeeAvailablie';
+import type { EmployeeAvailability } from '../../api/employeeAvailablie';
 
 export const TimeOff: React.FC = () => {
   // Sample data - in real app this would come from props or API
-  const [requests, setRequests] = useState([
-    {
-      id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      Date: "2025-08-16T07:51:32.023Z",
-      startTime: "18:30",
-      endTime: "18:30",
-      availabilityType: "UNAVAILABLE",
-      reason: "Family emergency",
-      approved: undefined,
-      createdAt: "2025-08-16T07:51:32.023Z",
-      employee: "John Doe"
-    },
-    {
-      id: "4fb85f64-5717-4562-b3fc-2c963f66afa7",
-      Date: "2025-08-18T07:51:32.023Z",
-      startTime: "09:00",
-      endTime: "17:00",
-      availabilityType: "UNAVAILABLE",
-      reason: "Medical appointment",
-      approved: true,
-      createdAt: "2025-08-15T07:51:32.023Z",
-      employee: "Sarah Smith"
-    },
-    {
-      id: "5gc85f64-5717-4562-b3fc-2c963f66afa8",
-      Date: "2025-08-20T07:51:32.023Z",
-      startTime: "08:00",
-      endTime: "16:00",
-      availabilityType: "UNAVAILABLE",
-      reason: "Personal leave",
-      approved: false,
-      createdAt: "2025-08-14T07:51:32.023Z",
-      employee: "Mike Johnson"
-    },
-    {
-      id: "6hd85f64-5717-4562-b3fc-2c963f66afa9",
-      Date: "2025-08-22T07:51:32.023Z",
-      startTime: "10:00",
-      endTime: "15:00",
-      availabilityType: "UNAVAILABLE",
-      reason: "Vacation",
-      approved: undefined,
-      createdAt: "2025-08-13T07:51:32.023Z",
-      employee: "Emma Wilson"
-    }
-  ]);
-
+  const [requests, setRequests] = useState<EmployeeAvailability[]>([]);
   const [activeTab, setActiveTab] = useState('list');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [employeeNames, setEmployeeNames] = useState<Record<string, string>>({});
+  const [loadingEmployees, setLoadingEmployees] = useState<Set<string>>(new Set());
 
-  const handleApproval = (requestId: string, approved: boolean) => {
+  const handleApproval = async (requestId: string, approved: boolean) => {
     setRequests(prev => 
       prev.map(req => 
         req.id === requestId ? { ...req, approved } : req
       )
     );
+    await employeeAvailabilityAPI.approveAvailability(requestId, approved);
+  };
+
+  const fetchEmployeeName = useCallback(async (employeeId: string) => {
+    if (employeeNames[employeeId] || loadingEmployees.has(employeeId)) {
+      return;
+    }
+
+    setLoadingEmployees(prev => new Set([...prev, employeeId]));
+    
+    try {
+      const userData = await employeeAvailabilityAPI.getAppUser(employeeId);
+      setEmployeeNames(prev => ({
+        ...prev,
+        [employeeId]: userData.firstName + ' ' + userData.lastName
+      }));
+    } catch (error) {
+      console.error(`Error fetching user data for ${employeeId}:`, error);
+      setEmployeeNames(prev => ({
+        ...prev,
+        [employeeId]: employeeId // Fallback to UUID if fetch fails
+      }));
+    } finally {
+      setLoadingEmployees(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(employeeId);
+        return newSet;
+      });
+    }
+  }, [employeeNames, loadingEmployees]);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const allRequests = await employeeAvailabilityAPI.getAvailabilityByOrganizationAndDepartment();
+        const timeOffRequests = allRequests.filter(request => request.availabilityType === 'UNAVAILABLE');
+        setRequests(timeOffRequests);
+        
+        // Fetch employee names for all unique employees
+        const uniqueEmployeeIds = [...new Set(timeOffRequests.map(req => req.employee))];
+        uniqueEmployeeIds.forEach(employeeId => {
+          fetchEmployeeName(employeeId);
+        });
+      } catch (error) {
+        console.error('Error fetching time-off requests:', error);
+        setRequests([]);
+      }
+    };
+    fetchRequests();
+  }, [fetchEmployeeName]);
+
+
+  const getEmployeeDisplayName = (employeeId: string) => {
+    return employeeNames[employeeId] || employeeId;
   };
 
   const formatDate = (dateString: string) => {
@@ -77,8 +90,8 @@ export const TimeOff: React.FC = () => {
     });
   };
 
-  const getStatusBadge = (approved?: boolean) => {
-    if (approved === undefined) {
+  const getStatusBadge = (approved: boolean | null) => {
+    if (approved === null) {
       return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">Pending</span>;
     }
     if (approved) {
@@ -88,16 +101,15 @@ export const TimeOff: React.FC = () => {
   };
 
   const filteredRequests = requests.filter(req => {
-    if (filterStatus === 'pending') return req.approved === undefined;
+    if (filterStatus === 'pending') return req.approved === null;
     if (filterStatus === 'approved') return req.approved === true;
     if (filterStatus === 'rejected') return req.approved === false;
     return true;
   });
 
   const generateCalendarDays = () => {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     const days = [];
 
     // Add empty cells for days before the first day of the month
@@ -108,7 +120,7 @@ export const TimeOff: React.FC = () => {
 
     // Add all days of the month
     for (let day = 1; day <= endOfMonth.getDate(); day++) {
-      days.push(new Date(today.getFullYear(), today.getMonth(), day));
+      days.push(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
     }
 
     return days;
@@ -117,21 +129,21 @@ export const TimeOff: React.FC = () => {
   const getRequestsForDate = (date: Date | null) => {
     if (!date) return [];
     const dateStr = date.toISOString().split('T')[0];
-    return requests.filter(req => req.Date.startsWith(dateStr));
+    return requests.filter(req => req.availabilityDate.startsWith(dateStr));
   };
 
   const ListView = () => (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-6 border-b">
+    <div className="bg-white rounded-lg shadow">
+      <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">Time-off Requests</h2>
+          <h2 className="text-xl font-semibold text-gray-900">All Requests</h2>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Filter className="w-4 h-4 text-gray-500" />
               <select 
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -144,7 +156,7 @@ export const TimeOff: React.FC = () => {
       </div>
       
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
@@ -161,16 +173,21 @@ export const TimeOff: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <User className="w-5 h-5 text-gray-400 mr-2" />
-                    <span className="text-sm font-medium text-gray-900">{request.employee}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {getEmployeeDisplayName(request.employee)}
+                    </span>
+                    {loadingEmployees.has(request.employee) && (
+                      <div className="ml-2 w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatDate(request.Date)}
+                  {formatDate(request.availabilityDate)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 text-gray-400 mr-1" />
-                    {formatTime(request.startTime)} - {formatTime(request.endTime)}
+                    {request.startTime} - {request.endTime}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -180,7 +197,7 @@ export const TimeOff: React.FC = () => {
                   {getStatusBadge(request.approved)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {request.approved === undefined ? (
+                  {request.approved === null ? (
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleApproval(request.id, true)}
@@ -217,14 +234,44 @@ export const TimeOff: React.FC = () => {
     </div>
   );
 
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(prev.getMonth() - 1);
+      } else {
+        newDate.setMonth(prev.getMonth() + 1);
+      }
+      return newDate;
+    });
+  };
+
   const CalendarView = () => {
     const days = generateCalendarDays();
-    const monthYear = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     
     return (
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">{monthYear}</h2>
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900">{monthYear}</h2>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => navigateMonth('prev')}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Previous month"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <button
+                onClick={() => navigateMonth('next')}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Next month"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+          </div>
         </div>
         
         <div className="p-6">
@@ -259,15 +306,15 @@ export const TimeOff: React.FC = () => {
                         <div 
                           key={request.id}
                           className={`text-xs p-1 rounded mb-1 truncate ${
-                            request.approved === undefined 
+                            request.approved === null 
                               ? 'bg-yellow-100 text-yellow-800'
                               : request.approved 
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-red-100 text-red-800'
                           }`}
-                          title={`${request.employee} - ${request.reason}`}
+                          title={`${getEmployeeDisplayName(request.employee)} - ${request.reason}`}
                         >
-                          {request.employee}
+                          {getEmployeeDisplayName(request.employee)}
                         </div>
                       ))}
                     </>
@@ -282,11 +329,16 @@ export const TimeOff: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Roster Management - Time-off Requests</h1>
-        
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Time-off Requests</h1>
+          <p className="text-gray-600 mt-1">
+            Manage and review employee time-off requests
+          </p>
+        </div>
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('list')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center ${

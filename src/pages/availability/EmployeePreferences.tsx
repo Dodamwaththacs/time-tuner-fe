@@ -1,5 +1,9 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { Plus, X, Edit, AlertCircle, Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import  {shiftAPI} from "../../api/shiftType";
+import type { ShiftType } from "../../api/shiftType";
+ 
+
 
 interface EmployeePreference {
   id: number;
@@ -22,6 +26,19 @@ interface ScheduledShift {
 }
 
 export const EmployeePreferences: React.FC = () => {
+
+  const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([]);
+
+  useEffect(() => {
+    const fetchShiftTypes = async () => {
+      const types = await shiftAPI.getAllByOrganization();  
+      setShiftTypes(types);
+    };
+
+    fetchShiftTypes();
+  }, []);
+
+
   const dummyPreferences: EmployeePreference[] = [
     {
       id: 1,
