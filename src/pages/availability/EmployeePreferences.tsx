@@ -2,10 +2,23 @@ import React, { useState,useEffect } from "react";
 import { Plus, X, Edit, AlertCircle, Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import  {shiftAPI} from "../../api/shiftType";
 import type { ShiftType } from "../../api/shiftType";
- 
+import { departmentAPI } from "../../api/department";
+import type { Department } from "../../api/department";
 
 
-interface EmployeePreference {
+// {
+//   "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+//   "preferenceType": "STRONGLY_PREFER",
+//   "preferenceWeight": 1073741824,
+//   "notes": "string",
+//   "active": true,
+//   "employee": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+//   "shiftType": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+//   "department": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+// }
+
+
+interface EmployeePreferenceMock {
   id: number;
   shiftName: string;
   department: string;
@@ -14,6 +27,22 @@ interface EmployeePreference {
   notes: string;
 }
 
+
+interface EmployeePreference {
+  id: number;
+  preferenceType: "STRONGLY_PREFER" | "PREFER" | "NEUTRAL" | "AVOID" | "STRONGLY_AVOID";
+  preferenceWeight: number;
+  notes: string;
+  employee: string;
+  shiftType: string;
+  department: string; 
+  active: boolean;
+  
+
+}
+
+
+
 interface ScheduledShift {
   id: number;
   date: string;
@@ -21,7 +50,7 @@ interface ScheduledShift {
   department: string;
   startTime: string;
   endTime: string;
-  preferenceMatch: "PREFERRED" | "ACCEPTABLE" | "AVOID" | "NONE";
+  preferenceMatch: "STRONGLY_PREFER" | "PREFER" | "NEUTRAL" | "AVOID" | "STRONGLY_AVOID";
   dateObj: Date;
 }
 
@@ -29,6 +58,8 @@ export const EmployeePreferences: React.FC = () => {
 
   const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([]);
   const [loadingShiftTypes, setLoadingShiftTypes] = useState<boolean>(true);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingDepartments, setLoadingDepartments] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchShiftTypes = async () => {
@@ -46,8 +77,23 @@ export const EmployeePreferences: React.FC = () => {
     fetchShiftTypes();
   }, []);
 
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoadingDepartments(true);
+        const departments = await departmentAPI.getAllByEmployee();
+        setDepartments(departments);
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+      } finally {
+        setLoadingDepartments(false);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
-  const dummyPreferences: EmployeePreference[] = [
+
+  const dummyPreferences: EmployeePreferenceMock[] = [
     {
       id: 1,
       shiftName: "Morning Shift",
@@ -82,7 +128,7 @@ export const EmployeePreferences: React.FC = () => {
       department: "Emergency",
       startTime: "07:00",
       endTime: "15:00",
-      preferenceMatch: "PREFERRED",
+      preferenceMatch: "PREFER",
       dateObj: new Date("2025-08-10")
     },
     {
@@ -102,7 +148,7 @@ export const EmployeePreferences: React.FC = () => {
       department: "General Ward",
       startTime: "15:00",
       endTime: "23:00",
-      preferenceMatch: "ACCEPTABLE",
+      preferenceMatch: "PREFER",
       dateObj: new Date("2025-08-22")
     },
     {
@@ -112,16 +158,16 @@ export const EmployeePreferences: React.FC = () => {
       department: "Emergency",
       startTime: "07:00",
       endTime: "15:00",
-      preferenceMatch: "PREFERRED",
+      preferenceMatch: "PREFER",
       dateObj: new Date("2025-08-28")
     }
   ];
 
-  const [preferences, setPreferences] = useState<EmployeePreference[]>(dummyPreferences);
+  const [preferences, setPreferences] = useState<EmployeePreferenceMock[]>(dummyPreferences);
   const [scheduledShifts, setScheduledShifts] = useState<ScheduledShift[]>(dummyScheduledShifts);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [showForm, setShowForm] = useState<boolean>(false);
-  const [formData, setFormData] = useState<EmployeePreference>({
+  const [formData, setFormData] = useState<EmployeePreferenceMock>({
     id: 0,
     shiftName: "",
     department: "",
@@ -169,7 +215,7 @@ export const EmployeePreferences: React.FC = () => {
     setPreferences(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleEdit = (pref: EmployeePreference): void => {
+  const handleEdit = (pref: EmployeePreferenceMock): void => {
     setFormData(pref);
     setEditMode(true);
     setShowForm(true);
@@ -302,14 +348,25 @@ export const EmployeePreferences: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Department
               </label>
-              <input
-                type="text"
+              <select
                 name="department"
                 value={formData.department}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 required
-              />
+                disabled={loadingDepartments}
+              >
+                <option value="">
+                  {loadingDepartments ? "Loading departments..." : "Select a department"}
+                </option>
+                {departments
+                  .filter(dept => dept.active)
+                  .map(dept => (
+                    <option key={dept.id} value={dept.departmentName}>
+                      {dept.departmentName}
+                    </option>
+                  ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -321,9 +378,11 @@ export const EmployeePreferences: React.FC = () => {
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
-                <option value="PREFERRED">Preferred</option>
-                <option value="ACCEPTABLE">Acceptable</option>
+                <option value="STRONGLY_PREFER">Strongly Preferred</option>
+                <option value="PREFER">Preferred</option>
+                <option value="NEUTRAL">Neutral</option>
                 <option value="AVOID">Avoid</option>
+                <option value="STRONGLY_AVOID">Strongly Avoid</option>
               </select>
             </div>
             <div>
@@ -500,9 +559,11 @@ export const EmployeePreferences: React.FC = () => {
                               className="text-xs font-bold" 
                               title={`Preference: ${shift.preferenceMatch}`}
                             >
-                              {shift.preferenceMatch === "PREFERRED" ? "💚" : 
-                               shift.preferenceMatch === "ACCEPTABLE" ? "💛" : 
-                               shift.preferenceMatch === "AVOID" ? "💔" : "⚪"}
+                              {shift.preferenceMatch === "STRONGLY_PREFER" ? "💚" : 
+                              shift.preferenceMatch === "PREFER" ? "💛" :
+                              shift.preferenceMatch === "NEUTRAL" ? "⚪" :
+                              shift.preferenceMatch === "AVOID" ? "💔" :
+                              shift.preferenceMatch === "STRONGLY_AVOID" ? "💔" : "⚪"}
                             </span>
                           </div>
                         </div>
