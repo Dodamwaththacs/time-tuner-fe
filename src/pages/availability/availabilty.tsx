@@ -110,7 +110,6 @@ export const Availability: React.FC = () => {
     }
   };
 
-
   const getDaysInMonth = (date: Date): (number | null)[] => {
     const year = date.getFullYear();
     const month = date.getMonth();
