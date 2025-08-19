@@ -28,11 +28,19 @@ interface ScheduledShift {
 export const EmployeePreferences: React.FC = () => {
 
   const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([]);
+  const [loadingShiftTypes, setLoadingShiftTypes] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchShiftTypes = async () => {
-      const types = await shiftAPI.getAllByOrganization();  
-      setShiftTypes(types);
+      try {
+        setLoadingShiftTypes(true);
+        const types = await shiftAPI.getAllByOrganization();  
+        setShiftTypes(types);
+      } catch (error) {
+        console.error('Error fetching shift types:', error);
+      } finally {
+        setLoadingShiftTypes(false);
+      }
     };
 
     fetchShiftTypes();
@@ -270,14 +278,25 @@ export const EmployeePreferences: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Shift Name
               </label>
-              <input
-                type="text"
+              <select
                 name="shiftName"
                 value={formData.shiftName}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 required
-              />
+                disabled={loadingShiftTypes}
+              >
+                <option value="">
+                  {loadingShiftTypes ? "Loading shifts..." : "Select a shift"}
+                </option>
+                {shiftTypes
+                  .filter(shift => shift.active)
+                  .map(shift => (
+                    <option key={shift.id} value={shift.shiftName}>
+                      {shift.shiftName} ({shift.startTime}:00 - {shift.endTime}:00)
+                    </option>
+                  ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

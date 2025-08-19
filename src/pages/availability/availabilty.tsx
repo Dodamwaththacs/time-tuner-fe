@@ -42,6 +42,7 @@ export const Availability: React.FC = () => {
           approved: item.approved,
           dateObj: new Date(item.availabilityDate)
         }));
+        console.log(transformedData);
       setUnavailabilities(transformedData);
     };
     fetchAvailability();
@@ -109,9 +110,6 @@ export const Availability: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: number): void => {
-    setUnavailabilities(prev => prev.filter(item => item.id !== id));
-  };
 
   const getDaysInMonth = (date: Date): (number | null)[] => {
     const year = date.getFullYear();
@@ -402,13 +400,7 @@ export const Availability: React.FC = () => {
                             >
                               {getApprovalIcon(unavail.approved)}
                             </span>
-                            <button
-                              onClick={() => handleDelete(unavail.id)}
-                              className="opacity-0 group-hover:opacity-100 hover:bg-red-200 rounded p-0.5 transition-all"
-                              title="Delete unavailability"
-                            >
-                              <X size={10} />
-                            </button>
+                            
                           </div>
                         </div>
                         <div className="truncate font-medium" title={unavail.reason}>
@@ -477,13 +469,7 @@ export const Availability: React.FC = () => {
                       {formatTime(unavail.startTime)} - {formatTime(unavail.endTime)}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(unavail.id)}
-                    className="text-red-600 hover:bg-red-50 p-1 rounded transition-colors ml-2"
-                    title="Delete unavailability"
-                  >
-                    <X size={16} />
-                  </button>
+                  
                 </div>
               ))}
             </div>
