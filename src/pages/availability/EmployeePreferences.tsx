@@ -4,6 +4,9 @@ import  {shiftAPI} from "../../api/shiftType";
 import type { ShiftType } from "../../api/shiftType";
 import { departmentAPI } from "../../api/department";
 import type { Department } from "../../api/department";
+import type { EmployeePreference } from "../../api/employeePreference";
+import type { EmployeePreferenceWithOutId } from "../../api/employeePreference";
+import { employeePreferenceAPI } from "../../api/employeePreference";
 
 
 // {
@@ -18,41 +21,34 @@ import type { Department } from "../../api/department";
 // }
 
 
-interface EmployeePreferenceMock {
-  id: number;
-  shiftName: string;
-  department: string;
-  preferenceType: "PREFERRED" | "ACCEPTABLE" | "AVOID";
-  preferenceWeight: number;
-  notes: string;
-}
-
-
-interface EmployeePreference {
-  id: number;
-  preferenceType: "STRONGLY_PREFER" | "PREFER" | "NEUTRAL" | "AVOID" | "STRONGLY_AVOID";
-  preferenceWeight: number;
-  notes: string;
-  employee: string;
-  shiftType: string;
-  department: string; 
-  active: boolean;
-  
-
-}
+// {
+//   "id": "123e4567-e89b-12d3-a456-426655440002",
+//   "preferenceType": "PREFER",
+//   "preferenceWeight": 6,
+//   "notes": "Will work nights in ICU if needed",
+//   "active": true,
+//   "employee": "Jessica",
+//   "shiftName": "Night Shift",
+//   "department": "Intensive Care Unit"
+// },
 
 
 
-interface ScheduledShift {
-  id: number;
-  date: string;
-  shiftName: string;
-  department: string;
-  startTime: string;
-  endTime: string;
-  preferenceMatch: "STRONGLY_PREFER" | "PREFER" | "NEUTRAL" | "AVOID" | "STRONGLY_AVOID";
-  dateObj: Date;
-}
+
+
+
+
+
+// interface ScheduledShift {
+//   id: number;
+//   date: string;
+//   shiftName: string;
+//   department: string;
+//   startTime: string;
+//   endTime: string;
+//   preferenceMatch: "STRONGLY_PREFER" | "PREFER" | "NEUTRAL" | "AVOID" | "STRONGLY_AVOID";
+//   dateObj: Date;
+// }
 
 export const EmployeePreferences: React.FC = () => {
 
@@ -93,87 +89,69 @@ export const EmployeePreferences: React.FC = () => {
   }, []);
 
 
-  const dummyPreferences: EmployeePreferenceMock[] = [
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const preferences = await employeePreferenceAPI.getAllByEmployee();
+        setPreferences(preferences);
+      } catch (error) {
+        console.error('Error fetching preferences:', error);
+      }
+    };
+    fetchPreferences();
+  }, []);
+
+
+  const dummyPreferences: EmployeePreferenceWithOutId[] = [
     {
-      id: 1,
-      shiftName: "Morning Shift",
-      department: "Emergency",
-      preferenceType: "PREFERRED",
+      id: "123e4567-e89b-12d3-a456-426655440002",
+      preferenceType: "PREFER",
       preferenceWeight: 5,
-      notes: "Best performance in mornings"
+      notes: "Best performance in mornings",
+      employee: "Jessica",
+      shiftName: "Morning Shift",
+      department: "Emergency"
     },
-    {
-      id: 2,
-      shiftName: "Night Shift",
-      department: "ICU",
-      preferenceType: "AVOID",
-      preferenceWeight: 1,
-      notes: "Health reasons"
-    },
-    {
-      id: 3,
-      shiftName: "Evening Shift",
-      department: "General Ward",
-      preferenceType: "ACCEPTABLE",
-      preferenceWeight: 3,
-      notes: "Can manage if needed"
-    }
+    
   ];
 
-  const dummyScheduledShifts: ScheduledShift[] = [
-    {
-      id: 1,
-      date: "2025-08-10",
-      shiftName: "Morning Shift",
-      department: "Emergency",
-      startTime: "07:00",
-      endTime: "15:00",
-      preferenceMatch: "PREFER",
-      dateObj: new Date("2025-08-10")
-    },
-    {
-      id: 2,
-      date: "2025-08-15",
-      shiftName: "Night Shift",
-      department: "ICU",
-      startTime: "23:00",
-      endTime: "07:00",
-      preferenceMatch: "AVOID",
-      dateObj: new Date("2025-08-15")
-    },
-    {
-      id: 3,
-      date: "2025-08-22",
-      shiftName: "Evening Shift",
-      department: "General Ward",
-      startTime: "15:00",
-      endTime: "23:00",
-      preferenceMatch: "PREFER",
-      dateObj: new Date("2025-08-22")
-    },
-    {
-      id: 4,
-      date: "2025-08-28",
-      shiftName: "Morning Shift",
-      department: "Emergency",
-      startTime: "07:00",
-      endTime: "15:00",
-      preferenceMatch: "PREFER",
-      dateObj: new Date("2025-08-28")
-    }
-  ];
+  // const dummyScheduledShifts: ScheduledShift[] = [
+  //   {
+  //     id: 1,
+  //     date: "2025-08-10",
+  //     shiftName: "Morning Shift",
+  //     department: "Emergency",
+  //     startTime: "07:00",
+  //     endTime: "15:00",
+  //     preferenceMatch: "PREFER",
+  //     dateObj: new Date("2025-08-10")
+  //   },
+  //   {
+  //     id: 2,
+  //     date: "2025-08-15",
+  //     shiftName: "Night Shift",
+  //     department: "ICU",
+  //     startTime: "23:00",
+  //     endTime: "07:00",
+  //     preferenceMatch: "AVOID",
+  //     dateObj: new Date("2025-08-15")
+  //   },
+    
+  // ];
 
-  const [preferences, setPreferences] = useState<EmployeePreferenceMock[]>(dummyPreferences);
-  const [scheduledShifts, setScheduledShifts] = useState<ScheduledShift[]>(dummyScheduledShifts);
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [preferences, setPreferences] = useState<EmployeePreferenceWithOutId[]>(dummyPreferences);
+  // const [scheduledShifts, setScheduledShifts] = useState<any[]>(dummyScheduledShifts);
+  // const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [showForm, setShowForm] = useState<boolean>(false);
-  const [formData, setFormData] = useState<EmployeePreferenceMock>({
-    id: 0,
-    shiftName: "",
-    department: "",
-    preferenceType: "PREFERRED",
+  const [formData, setFormData] = useState<EmployeePreference>({
+    id: "",
+    preferenceType: "PREFER",
     preferenceWeight: 3,
-    notes: ""
+    notes: "",
+    employee: "",
+    shiftType: "",
+    department: "",
+    active: true
   });
   const [editMode, setEditMode] = useState<boolean>(false);
 
@@ -185,38 +163,56 @@ export const EmployeePreferences: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (): void => {
-    if (!formData.shiftName || !formData.department || !formData.preferenceType) {
+  const handleSubmit = async (): Promise<void> => {
+    if (!formData.shiftType || !formData.department || !formData.preferenceType) {
       alert("Please fill in all required fields");
       return;
     }
-
-    if (editMode) {
-      setPreferences(prev =>
-        prev.map(pref => (pref.id === formData.id ? formData : pref))
-      );
-    } else {
-      setPreferences(prev => [...prev, { ...formData, id: Date.now() }]);
+  
+    // Define a variable to hold the successful submission status
+    let isSuccess = false;
+  
+    try {
+      // The API call is an asynchronous operation, so we use 'await'
+      const createdPreference = await employeePreferenceAPI.create(formData);
+      console.log("Preference created successfully:", createdPreference);
+  
+      // If the API call succeeds, set our status variable to true
+      isSuccess = true;
+  
+    } catch (error) {
+      // If the API call fails, the catch block will execute
+      console.error('Error creating preference:', error);
+      alert('Failed to submit preference. Please try again.');
     }
-
-    setFormData({
-      id: 0,
-      shiftName: "",
-      department: "",
-      preferenceType: "PREFERRED",
-      preferenceWeight: 3,
-      notes: ""
-    });
-    setShowForm(false);
-    setEditMode(false);
+  
+    // This block runs after the try...catch block finishes
+    if (isSuccess) {
+      // Reset the form data only if the submission was successful
+      setFormData({
+        id: "123e4567-e89b-12d3-a456-426655440001",
+        preferenceType: "PREFER",
+        preferenceWeight: 3,
+        notes: "",
+        employee: "123e4567-e89b-12d3-a456-426655440001",
+        shiftType: "",
+        department: "",
+        active: true
+      });
+      // And then close the form
+      setShowForm(false);
+      setEditMode(false);
+      alert('Preference submitted successfully!');
+    }
   };
 
-  const handleDelete = (id: number): void => {
+  
+  const handleDelete = (id: string): void => {
     setPreferences(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleEdit = (pref: EmployeePreferenceMock): void => {
-    setFormData(pref);
+  const handleEdit = (pref: EmployeePreferenceWithOutId): void => {
+    // setFormData(pref);
     setEditMode(true);
     setShowForm(true);
   };
@@ -258,37 +254,37 @@ export const EmployeePreferences: React.FC = () => {
     return days;
   };
 
-  const getShiftsForDate = (day: number | null): ScheduledShift[] => {
-    if (!day) return [];
+  // const getShiftsForDate = (day: number | null): ScheduledShift[] => {
+  //   if (!day) return [];
     
-    const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    return scheduledShifts.filter(shift => {
-      const shiftDate = new Date(shift.date);
-      return shiftDate.toDateString() === targetDate.toDateString();
-    });
-  };
+  //   const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+  //   return scheduledShifts.filter(shift => {
+  //     const shiftDate = new Date(shift.date);
+  //     return shiftDate.toDateString() === targetDate.toDateString();
+  //   });
+  // };
 
-  const navigateMonth = (direction: number): void => {
-    setCurrentDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setMonth(newDate.getMonth() + direction);
-      return newDate;
-    });
-  };
+  // const navigateMonth = (direction: number): void => {
+  //   setCurrentDate(prev => {
+  //     const newDate = new Date(prev);
+  //     newDate.setMonth(newDate.getMonth() + direction);
+  //     return newDate;
+  //   });
+  // };
 
-  const formatTime = (time: string): string => {
-    const [hours, minutes] = time.split(':');
-    const hour12 = parseInt(hours) % 12 || 12;
-    const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
-    return `${hour12}:${minutes} ${ampm}`;
-  };
+  // const formatTime = (time: string): string => {
+  //   const [hours, minutes] = time.split(':');
+  //   const hour12 = parseInt(hours) % 12 || 12;
+  //   const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+  //   return `${hour12}:${minutes} ${ampm}`;
+  // };
 
-  const monthNames: string[] = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  // const monthNames: string[] = [
+  //   "January", "February", "March", "April", "May", "June",
+  //   "July", "August", "September", "October", "November", "December"
+  // ];
 
-  const dayNames: string[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  // const dayNames: string[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white">
@@ -325,8 +321,8 @@ export const EmployeePreferences: React.FC = () => {
                 Shift Name
               </label>
               <select
-                name="shiftName"
-                value={formData.shiftName}
+                name="shiftType"
+                value={formData.shiftType}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 required
@@ -338,7 +334,7 @@ export const EmployeePreferences: React.FC = () => {
                 {shiftTypes
                   .filter(shift => shift.active)
                   .map(shift => (
-                    <option key={shift.id} value={shift.shiftName}>
+                    <option key={shift.id} value={shift.id}>
                       {shift.shiftName} ({shift.startTime}:00 - {shift.endTime}:00)
                     </option>
                   ))}
@@ -362,7 +358,7 @@ export const EmployeePreferences: React.FC = () => {
                 {departments
                   .filter(dept => dept.active)
                   .map(dept => (
-                    <option key={dept.id} value={dept.departmentName}>
+                    <option key={dept.id} value={dept.id}>
                       {dept.departmentName}
                     </option>
                   ))}
@@ -493,10 +489,11 @@ export const EmployeePreferences: React.FC = () => {
         </div>
       </div>
 
+
       {/* Calendar View */}
+{/* 
       <div className="mt-8 bg-white border border-gray-200 rounded-lg shadow-sm">
-        {/* Calendar Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+\        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <button
             onClick={() => navigateMonth(-1)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -515,8 +512,7 @@ export const EmployeePreferences: React.FC = () => {
           </button>
         </div>
 
-        {/* Day Headers */}
-        <div className="grid grid-cols-7 border-b border-gray-200">
+\        <div className="grid grid-cols-7 border-b border-gray-200">
           {dayNames.map(day => (
             <div key={day} className="p-3 text-center font-medium text-gray-600 bg-gray-50">
               {day}
@@ -524,7 +520,6 @@ export const EmployeePreferences: React.FC = () => {
           ))}
         </div>
 
-        {/* Calendar Grid */}
         <div className="grid grid-cols-7">
           {getDaysInMonth(currentDate).map((day, index) => {
             const dayShifts = getShiftsForDate(day);
@@ -580,9 +575,10 @@ export const EmployeePreferences: React.FC = () => {
               </div>
             );
           })}
-        </div>
+        </div> */}
 
         {/* Legend */}
+{/*         
         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
           <h4 className="text-sm font-medium text-gray-700 mb-2">Preference Match Legend:</h4>
           <div className="flex flex-wrap gap-4 text-xs">
@@ -607,7 +603,7 @@ export const EmployeePreferences: React.FC = () => {
             Calendar shows scheduled shifts and how they match your preferences
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* Summary */}
       {preferences.length > 0 && (
