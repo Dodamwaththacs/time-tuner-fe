@@ -1,1 +1,1 @@
-export { ShiftChangeRequestForm } from './ShiftChangeRequestForm';
+export { default as ShiftSwap } from './ShiftSwap';

@@ -13,6 +13,7 @@ import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { Users } from './pages/Users';
 import { System } from './pages/System';
+import  MyProfile  from './pages/MyProfile';
 import { Layout } from './components/Layout';
 import { RoleBasedUI } from './components/RoleBasedUI';
 import { UIStrategyGuide } from './components/UIStrategyGuide';
@@ -23,7 +24,7 @@ import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine,EnhancedScheduleB
 import { EmployeeRoles,AddEmployee ,AllEmployees} from './pages/employee-management/index';
 import { Availability ,EmployeePreferences} from './pages/availability/index';
 import { TimeOff } from './pages/request-and-approvels/Time-off';
-// import { ShiftChangeRequestForm  } from './pages/ShiftManagement/ShiftChangeRequestForm';
+import { ShiftSwap } from './pages/ShiftManagement/index';
 function App() {
   return (
     <AuthProvider>
@@ -66,6 +67,18 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Tasks />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* My Profile */}
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyProfile />
                 </Layout>
               </ProtectedRoute>
             } 
@@ -176,6 +189,19 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <AddEmployee />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Shift Management Routes */}
+
+          <Route 
+            path="/shifts/swaps" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ShiftSwap />
                 </Layout>
               </ProtectedRoute>
             }
