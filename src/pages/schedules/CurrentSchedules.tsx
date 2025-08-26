@@ -1,129 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Clock, User, Users, Filter, Search, Eye, EyeOff, X, Grid, List, MapPin, Phone, Mail, Plus, Download, RefreshCw } from 'lucide-react';
-
-// Mock API function - replace with your actual API
-const scheduleAPI = {
-  getAll: async (): Promise<Schedule[]> => {
-    // Mock data with more realistic healthcare scheduling
-    return [
-      {
-        id: 1,
-        staff_id: 101,
-        staff: { name: 'Dr. Sarah Johnson', role: 'Cardiologist', department: 'Cardiology', phone: '(555) 0101', email: 'sarah.johnson@hospital.com' },
-        shift_type: 'Morning',
-        date: '2025-08-06',
-        start_time: '08:00',
-        end_time: '16:00',
-        location: 'Ward A - Room 201',
-        status: 'confirmed' as const,
-        notes: 'Regular rounds and consultations'
-      },
-      {
-        id: 2,
-        staff_id: 102,
-        staff: { name: 'Nurse Mike Chen', role: 'RN', department: 'Emergency', phone: '(555) 0102', email: 'mike.chen@hospital.com' },
-        shift_type: 'Night',
-        date: '2025-08-06',
-        start_time: '20:00',
-        end_time: '08:00',
-        location: 'Emergency Room',
-        status: 'confirmed' as const,
-        notes: 'Night shift coverage'
-      },
-      {
-        id: 3,
-        staff_id: 103,
-        staff: { name: 'Dr. Emily Rodriguez', role: 'Surgeon', department: 'Surgery', phone: '(555) 0103', email: 'emily.rodriguez@hospital.com' },
-        shift_type: 'On-call',
-        date: '2025-08-07',
-        start_time: '00:00',
-        end_time: '23:59',
-        location: 'OR 1-3',
-        status: 'tentative' as const,
-        notes: 'Emergency surgery on-call'
-      },
-      {
-        id: 4,
-        staff_id: 104,
-        staff: { name: 'Nurse Jennifer Adams', role: 'RN', department: 'ICU', phone: '(555) 0104', email: 'jennifer.adams@hospital.com' },
-        shift_type: 'Evening',
-        date: '2025-08-07',
-        start_time: '16:00',
-        end_time: '00:00',
-        location: 'ICU Ward',
-        status: 'confirmed' as const,
-        notes: 'Patient monitoring and care'
-      },
-      {
-        id: 5,
-        staff_id: 105,
-        staff: { name: 'Dr. James Wilson', role: 'Radiologist', department: 'Radiology', phone: '(555) 0105', email: 'james.wilson@hospital.com' },
-        shift_type: 'Morning',
-        date: '2025-08-08',
-        start_time: '09:00',
-        end_time: '17:00',
-        location: 'Radiology Dept',
-        status: 'confirmed' as const,
-        notes: 'Imaging studies and reports'
-      },
-      {
-        id: 6,
-        staff_id: 106,
-        staff: { name: 'Dr. Lisa Park', role: 'Pediatrician', department: 'Pediatrics', phone: '(555) 0106', email: 'lisa.park@hospital.com' },
-        shift_type: 'Morning',
-        date: '2025-08-08',
-        start_time: '08:30',
-        end_time: '16:30',
-        location: 'Pediatric Ward',
-        status: 'confirmed' as const,
-        notes: 'Pediatric consultations'
-      },
-      {
-        id: 7,
-        staff_id: 107,
-        staff: { name: 'Nurse Robert Kim', role: 'RN', department: 'Surgery', phone: '(555) 0107', email: 'robert.kim@hospital.com' },
-        shift_type: 'Evening',
-        date: '2025-08-09',
-        start_time: '15:00',
-        end_time: '23:00',
-        location: 'OR Recovery',
-        status: 'confirmed' as const,
-        notes: 'Post-operative care'
-      },
-      {
-        id: 8,
-        staff_id: 108,
-        staff: { name: 'Dr. Maria Garcia', role: 'Neurologist', department: 'Neurology', phone: '(555) 0108', email: 'maria.garcia@hospital.com' },
-        shift_type: 'Morning',
-        date: '2025-08-09',
-        start_time: '07:00',
-        end_time: '15:00',
-        location: 'Neurology Unit',
-        status: 'tentative' as const,
-        notes: 'Neurological assessments'
-      }
-    ];
-  }
-};
-
-type Schedule = {
-  id: number;
-  staff_id: number;
-  staff: {
-    name: string;
-    role: string;
-    department: string;
-    phone?: string;
-    email?: string;
-  };
-  shift_type: string;
-  date: string;
-  start_time: string;
-  end_time: string;
-  location: string;
-  status: 'confirmed' | 'tentative' | 'cancelled';
-  notes?: string;
-};
+import type { Schedule } from '../../api/shift';
+import { scheduleAPI } from '../../api/shift';
 
 
 export const CurrentSchedules: React.FC = () => {
@@ -142,21 +20,31 @@ export const CurrentSchedules: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showEmptyDays, setShowEmptyDays] = useState(true);
 
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      setLoading(true);
-      try {
-        const data = await scheduleAPI.getAll();
-        setSchedules(data);
-        setFilteredSchedules(data);
-      } catch (error) {
-        console.error('Error fetching schedules:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSchedules();
-  }, []);
+useEffect(() => {
+  const fetchSchedules = async () => {
+    setLoading(true);
+    try {
+      const data = await scheduleAPI.getAll();
+      // Normalize shiftType, status, and date
+      const normalized = data.map((s: any) => ({
+        ...s,
+        shiftType: s.shiftType === 'Night Shift' ? 'Night' : s.shiftType,
+        status: s.status === 'ASSIGNED' ? 'confirmed' : s.status,
+        date: s.date.split('T')[0], 
+      }));
+
+
+      console.log('Fetched schedules:', normalized);
+      setSchedules(normalized);
+      setFilteredSchedules(normalized);
+    } catch (error) {
+      console.error('Error fetching schedules:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchSchedules();
+}, []);
 
   // Filter schedules when filters change
   useEffect(() => {
@@ -183,7 +71,7 @@ export const CurrentSchedules: React.FC = () => {
     // Shift type filter
     if (selectedShiftTypes.length > 0) {
       filtered = filtered.filter(schedule =>
-        selectedShiftTypes.includes(schedule.shift_type)
+        selectedShiftTypes.includes(schedule.shiftType)
       );
     }
 
@@ -244,7 +132,7 @@ export const CurrentSchedules: React.FC = () => {
   };
 
   const getShiftTypes = () => {
-    return [...new Set(schedules.map(s => s.shift_type))];
+    return [...new Set(schedules.map(s => s.shiftType))];
   };
 
   const getStatuses = () => {
@@ -399,12 +287,12 @@ export const CurrentSchedules: React.FC = () => {
                         <div className="text-gray-600 mb-2 text-xs">
                           {schedule.staff.role} • {schedule.staff.department}
                         </div>
-                        <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-2 ${getShiftTypeColor(schedule.shift_type)}`}>
-                          {schedule.shift_type}
+                        <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-2 ${getShiftTypeColor(schedule.shiftType)}`}>
+                          {schedule.shiftType}
                         </div>
                         <div className="flex items-center text-gray-500 mb-1">
                           <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
-                          <span className="truncate">{schedule.start_time} - {schedule.end_time}</span>
+                          <span className="truncate">{schedule.startTime} - {schedule.endTime}</span>
                         </div>
                         <div className="flex items-center text-gray-500">
                           <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
@@ -468,12 +356,12 @@ export const CurrentSchedules: React.FC = () => {
                     {daySchedules.slice(0, 3).map((schedule) => (
                       <div
                         key={schedule.id}
-                        className={`text-xs p-1 rounded cursor-pointer transition-colors ${getShiftTypeColor(schedule.shift_type)} hover:opacity-75`}
+                        className={`text-xs p-1 rounded cursor-pointer transition-colors ${getShiftTypeColor(schedule.shiftType)} hover:opacity-75`}
                         onClick={() => setSelectedSchedule(schedule)}
-                        title={`${schedule.staff.name} - ${schedule.start_time}`}
+                        title={`${schedule.staff.name} - ${schedule.startTime}`}
                       >
                         <div className="truncate font-medium">{schedule.staff.name}</div>
-                        <div className="truncate">{schedule.start_time}</div>
+                        <div className="truncate">{schedule.startTime}</div>
                       </div>
                     ))}
                     {daySchedules.length > 3 && (
@@ -493,7 +381,7 @@ export const CurrentSchedules: React.FC = () => {
 
   const renderDayView = () => {
     const dateStr = formatDate(currentDate);
-    const daySchedules = getSchedulesForDate(dateStr).sort((a, b) => a.start_time.localeCompare(b.start_time));
+    const daySchedules = getSchedulesForDate(dateStr).sort((a, b) => a.startTime.localeCompare(b.startTime));
     const isToday = formatDate(new Date()) === dateStr;
 
     return (
@@ -529,8 +417,8 @@ export const CurrentSchedules: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
                         <h3 className="text-lg font-semibold text-gray-900">{schedule.staff.name}</h3>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getShiftTypeColor(schedule.shift_type)}`}>
-                          {schedule.shift_type}
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getShiftTypeColor(schedule.shiftType)}`}>
+                          {schedule.shiftType}
                         </span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
                           schedule.status === 'confirmed' ? 'bg-green-100 text-green-800' :
@@ -548,7 +436,7 @@ export const CurrentSchedules: React.FC = () => {
                         </div>
                         <div className="flex items-center">
                           <Clock className="h-4 w-4 mr-2" />
-                          {schedule.start_time} - {schedule.end_time}
+                          {schedule.startTime} - {schedule.endTime}
                         </div>
                         <div className="flex items-center">
                           <MapPin className="h-4 w-4 mr-2" />
@@ -956,7 +844,7 @@ export const CurrentSchedules: React.FC = () => {
                       </div>
                       <div className="flex items-center text-gray-900 mt-2">
                         <Clock className="h-5 w-5 mr-2 text-gray-500" />
-                        {selectedSchedule.start_time} - {selectedSchedule.end_time}
+                        {selectedSchedule.startTime} - {selectedSchedule.endTime}
                       </div>
                     </div>
 
@@ -970,8 +858,8 @@ export const CurrentSchedules: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Shift Type</label>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getShiftTypeColor(selectedSchedule.shift_type)}`}>
-                        {selectedSchedule.shift_type}
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getShiftTypeColor(selectedSchedule.shiftType)}`}>
+                        {selectedSchedule.shiftType}
                       </span>
                     </div>
                   </div>
