@@ -34,9 +34,10 @@ export interface CreateShiftResponse {
   department: string;
   requiredRole: string;
   organization: string;
+  isOptimized?: boolean;
   skillRequirements?: Omit<ShiftSkillRequirement, "id" | "shift">[];
 }
-
+ 
 const generateUniqueId = (): string => {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9);
 };
@@ -82,6 +83,7 @@ const mapToShift = (response: CreateShiftResponse): Shift => {
     shiftType: response.shiftType,
     department: response.department,
     requiredRole: response.requiredRole,
+    isOptimized: response.isOptimized,  
     skillRequirements:
       response.skillRequirements?.map((req) => ({
         id: generateUniqueId(),

@@ -27,6 +27,7 @@ export interface Shift {
   shiftType: string; // Make sure this matches what you're using
   department: string;
   requiredRole: string; // Make sure this matches what you're using
+  isOptimized?: boolean;
   skillRequirements: {
     id: string;
     requiredCount: number;
@@ -36,6 +37,7 @@ export interface Shift {
     role: string;
   }[];
   status: "draft" | "published";
+
 }
 
 
@@ -938,8 +940,17 @@ useEffect(() => {
                               shift.status
                             )}`}
                           >
+
+
                             {shift.status.charAt(0).toUpperCase() +
                               shift.status.slice(1)}
+                          </span>
+
+                          {/* is optimized or not */}
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${shift.isOptimized ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                          >
+                            {shift.isOptimized ? "Optimized" : "Not Optimized"}
                           </span>
                           <span className="text-sm text-gray-500">
                             Shift #{shift.id}
@@ -1070,13 +1081,7 @@ useEffect(() => {
                           <Eye className="w-4 h-4" />
                         )}
                       </button>
-                      <button
-                        onClick={() => duplicateShift(shift)}
-                        className="p-2 text-gray-400 hover:text-green-600 transition-colors"
-                        title="Duplicate shift"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
+                      
                       <button
                         onClick={() => removeShift(shift)}
                         className="p-2 text-gray-400 hover:text-red-600 transition-colors"
@@ -1113,15 +1118,22 @@ useEffect(() => {
           {shifts.filter((s) => s.status === "draft").length}
         </div>
         <div className="flex space-x-4">
-          <button className="px-6 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
-            Save as Draft
-          </button>
+          
           <button
             className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center"
             onClick={submitShift}
           >
             <CheckCircle className="w-4 h-4 mr-2" />
             Create Schedule
+          </button>
+
+          {/* Optimize button */}
+          <button
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
+            // onClick={optimizeSchedule}
+          >
+            <Star className="w-4 h-4 mr-2" />
+            Optimize Schedule
           </button>
         </div>
       </div>
