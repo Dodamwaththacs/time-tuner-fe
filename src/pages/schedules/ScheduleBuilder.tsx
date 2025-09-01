@@ -62,6 +62,7 @@ export const ScheduleBuilder: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [selectedShiftIds, setSelectedShiftIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -373,6 +374,66 @@ export const ScheduleBuilder: React.FC = () => {
     return Date.now().toString() + Math.random().toString(36).substr(2, 9);
   };
 
+  // Handle checkbox selection for shifts
+  const handleShiftSelection = (shiftId: string, isSelected: boolean) => {
+    setSelectedShiftIds((prev) => {
+      const newSet = new Set(prev);
+      if (isSelected) {
+        newSet.add(shiftId);
+      } else {
+        newSet.delete(shiftId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle select all / deselect all
+  const handleSelectAll = () => {
+    const eligibleShifts = shifts.filter(shift => shift.status === "published" && !shift.isOptimized);
+    const eligibleShiftIds = eligibleShifts.map(shift => shift.id);
+    
+    if (selectedShiftIds.size === eligibleShiftIds.length && eligibleShiftIds.every(id => selectedShiftIds.has(id))) {
+      setSelectedShiftIds(new Set());
+    } else {
+      setSelectedShiftIds(new Set(eligibleShiftIds));
+    }
+  };
+
+  // Optimize schedule API call
+  const optimizeSchedule = async () => {
+    if (selectedShiftIds.size === 0) {
+      alert("Please select at least one shift to optimize.");
+      return;
+    }
+
+    try {
+      const payload = {
+        shiftId: Array.from(selectedShiftIds)
+      };
+
+      const response = await fetch("http://localhost:8080/api/optimization/solve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Optimization successful:", result);
+        alert("Schedule optimization completed successfully!");
+        // Optionally refresh shifts or update UI
+      } else {
+        console.error("Optimization failed:", response.statusText);
+        alert("Failed to optimize schedule. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error calling optimization API:", error);
+      alert("Error connecting to optimization service. Please check your connection.");
+    }
+  };
+
 
   useEffect(() => {
   console.log("Shifts state changed:", shifts);
@@ -381,6 +442,23 @@ export const ScheduleBuilder: React.FC = () => {
 useEffect(() => {
   console.log("New shift state changed:", newShift);
 }, [newShift]);
+
+// Clean up selected shifts when they become ineligible
+useEffect(() => {
+  const eligibleShiftIds = shifts
+    .filter(shift => shift.status === "published" && !shift.isOptimized)
+    .map(shift => shift.id);
+  
+  setSelectedShiftIds(prev => {
+    const newSet = new Set<string>();
+    prev.forEach(id => {
+      if (eligibleShiftIds.includes(id)) {
+        newSet.add(id);
+      }
+    });
+    return newSet;
+  });
+}, [shifts]);
 
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentMonth);
@@ -908,25 +986,64 @@ useEffect(() => {
               <div>
                 <h2 className="text-xl font-semibold">Created Shifts</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  {shifts.length} shift{shifts.length !== 1 ? "s" : ""} defined
+                  {shifts.length} shift{shifts.length !== 1 ? "s" : ""} defined • 
+                  {(() => {
+                    const eligibleShifts = shifts.filter(shift => shift.status === "published" && !shift.isOptimized);
+                    return ` ${eligibleShifts.length} eligible for optimization • `;
+                  })()} 
+                  {selectedShiftIds.size} selected
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="text-sm text-gray-500">Status Legend:</div>
-                <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
-                  Draft
-                </span>
-                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                  Published
-                </span>
+              <div className="flex items-center space-x-4">
+                {(() => {
+                  const eligibleShifts = shifts.filter(shift => shift.status === "published" && !shift.isOptimized);
+                  return eligibleShifts.length > 0 && (
+                    <button
+                      onClick={handleSelectAll}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      {selectedShiftIds.size === eligibleShifts.length && eligibleShifts.every(shift => selectedShiftIds.has(shift.id)) 
+                        ? "Deselect All" 
+                        : `Select All Eligible (${eligibleShifts.length})`}
+                    </button>
+                  );
+                })()}
+                <div className="flex items-center space-x-2">
+                  <div className="text-sm text-gray-500">Status Legend:</div>
+                  <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                    Draft
+                  </span>
+                  <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                    Published
+                  </span>
+
+                  <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+                    Not Optimized
+                  </span>
+                  <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                    Optimized
+                  </span>
+                </div>
               </div>
             </div>
             <div className="divide-y divide-gray-200">
               {shifts.map((shift) => (
                 <div key={shift.id} className="p-6 hover:bg-gray-50">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-4 mb-3">
+                    <div className="flex items-start space-x-4 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedShiftIds.has(shift.id)}
+                        onChange={(e) => handleShiftSelection(shift.id, e.target.checked)}
+                        disabled={shift.status !== "published" || shift.isOptimized}
+                        className={`mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
+                          shift.status !== "published" || shift.isOptimized 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : ""
+                        }`}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-4 mb-3">
                         <div className="flex items-center space-x-2">
                           <span
                             className={`px-3 py-1 text-xs font-medium rounded-full border ${getPriorityColor(
@@ -1063,6 +1180,7 @@ useEffect(() => {
                           </p>
                         </div>
                       )}
+                      </div>
                     </div>
 
                     <div className="ml-4 flex items-center space-x-2">
@@ -1129,11 +1247,17 @@ useEffect(() => {
 
           {/* Optimize button */}
           <button
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
-            // onClick={optimizeSchedule}
+            className={`px-6 py-2 rounded-md transition-colors flex items-center ${
+              selectedShiftIds.size > 0
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+            onClick={optimizeSchedule}
+            disabled={selectedShiftIds.size === 0}
+            title={selectedShiftIds.size === 0 ? "Please select at least one shift to optimize" : "Optimize selected shifts"}
           >
             <Star className="w-4 h-4 mr-2" />
-            Optimize Schedule
+            Optimize Schedule ({selectedShiftIds.size})
           </button>
         </div>
       </div>

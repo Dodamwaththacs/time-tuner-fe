@@ -25,6 +25,7 @@ import { EmployeeRoles,AddEmployee ,AllEmployees} from './pages/employee-managem
 import { Availability ,EmployeePreferences} from './pages/availability/index';
 import { TimeOff } from './pages/request-and-approvels/Time-off';
 import { ShiftSwap } from './pages/ShiftManagement/index';
+import { MySchedule } from './pages/My Schedule';
 function App() {
   return (
     <AuthProvider>
@@ -79,6 +80,17 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <MyProfile />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/my-schedule" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MySchedule />
                 </Layout>
               </ProtectedRoute>
             } 
