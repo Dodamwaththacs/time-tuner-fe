@@ -10,8 +10,7 @@ import {
     Mail,
     Building2,
     CalendarDays,
-    Timer,
-    Target,
+   
 } from "lucide-react";
 
 // Personal Schedule Interfaces

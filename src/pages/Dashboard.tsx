@@ -1,73 +1,46 @@
 import React, { useMemo, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Layout } from '../components/Layout';
+import { Calendar, Clock, Users, Activity, ArrowRight, CheckCircle, AlertCircle, TrendingUp, Plus } from 'lucide-react';
 import type { UserRole } from '../contexts/AuthContext';
 
-// Types for better type safety
+// Simplified types for better readability
 interface DashboardStat {
   label: string;
   value: string;
-  change: string;
+  change?: string;
+  icon: React.ComponentType<any>;
   color: string;
-  trend: 'up' | 'down' | 'neutral';
-}
-
-interface RecentActivity {
-  id: string;
-  action: string;
-  time: string;
-  type: ActivityType;
-  priority: 'high' | 'medium' | 'low';
+  trend?: 'up' | 'down' | 'neutral';
 }
 
 interface QuickAction {
   id: string;
   label: string;
-  icon: string;
+  icon: React.ComponentType<any>;
   color: string;
   action: string;
-  disabled?: boolean;
+  description: string;
 }
 
-type ActivityType = 
-  | 'user' | 'system' | 'schedule' | 'optimization' | 'swap' 
-  | 'availability' | 'coverage' | 'shift' | 'training' | 'overtime' 
-  | 'preferences' | 'budget' | 'compliance' | 'review';
+interface ActivityItem {
+  id: string;
+  title: string;
+  time: string;
+  type: 'success' | 'warning' | 'info';
+  description: string;
+}
 
-// Constants
-const ACTIVITY_ICONS: Record<ActivityType, string> = {
-  user: '👤',
-  system: '⚙️',
-  schedule: '📅',
-  optimization: '🎯',
-  swap: '🔄',
-  availability: '✅',
-  coverage: '🛡️',
-  shift: '⏰',
-  training: '📚',
-  overtime: '⏳',
-  preferences: '⚙️',
-  budget: '💰',
-  compliance: '📋',
-  review: '📊'
+// Data for different user roles
+const getWelcomeMessage = (role: UserRole, name: string) => {
+  const messages = {
+    admin: `Welcome back, ${name}! Here's your system overview.`,
+    manager: `Hello ${name}! Here's your team dashboard.`,
+    employee: `Hi ${name}! Here's your schedule overview.`
+  };
+  return messages[role] || `Welcome, ${name}!`;
 };
 
-const ROLE_COLORS = {
-  admin: 'purple',
-  manager: 'blue',
-  employee: 'green'
-} as const;
-
-// Utility functions
-const formatChange = (change: string, trend: 'up' | 'down' | 'neutral') => {
-  const isPositive = trend === 'up';
-  const colorClass = isPositive ? 'text-green-600' : trend === 'down' ? 'text-red-600' : 'text-gray-600';
-  const symbol = isPositive ? '↗' : trend === 'down' ? '↘' : '→';
-  
-  return { colorClass, symbol };
-};
-
-// Data generation functions
 const getDashboardStatsByRole = (role: UserRole): DashboardStat[] => {
   switch (role) {
     case 'admin':
@@ -75,92 +48,80 @@ const getDashboardStatsByRole = (role: UserRole): DashboardStat[] => {
         { 
           label: 'Total Staff', 
           value: '156', 
-          change: '+8', 
-          color: 'text-blue-600', 
-          trend: 'up' 
+          icon: Users,
+          color: 'bg-blue-500 text-white'
         },
         { 
           label: 'Active Shifts', 
           value: '24', 
-          change: '+3', 
-          color: 'text-green-600', 
-          trend: 'up' 
+          icon: Clock,
+          color: 'bg-green-500 text-white'
         },
         { 
-          label: 'Schedule Coverage', 
+          label: 'Coverage', 
           value: '98.5%', 
-          change: '+2.1%', 
-          color: 'text-purple-600', 
-          trend: 'up' 
+          icon: CheckCircle,
+          color: 'bg-purple-500 text-white'
         },
         { 
-          label: 'Overtime Hours', 
-          value: '45.2h', 
-          change: '-12%', 
-          color: 'text-orange-600', 
-          trend: 'down' 
+          label: 'Performance', 
+          value: 'Excellent', 
+          icon: TrendingUp,
+          color: 'bg-orange-500 text-white'
         }
       ];
     case 'manager':
       return [
         { 
-          label: 'Team Members', 
+          label: 'Team Size', 
           value: '18', 
-          change: '+2', 
-          color: 'text-blue-600', 
-          trend: 'up' 
+          icon: Users,
+          color: 'bg-blue-500 text-white'
         },
         { 
-          label: 'Weekly Shifts', 
-          value: '84', 
-          change: '+5', 
-          color: 'text-green-600', 
-          trend: 'up' 
+          label: 'This Week', 
+          value: '84 shifts', 
+          icon: Calendar,
+          color: 'bg-green-500 text-white'
         },
         { 
-          label: 'Schedule Conflicts', 
-          value: '3', 
-          change: '-2', 
-          color: 'text-purple-600', 
-          trend: 'down' 
+          label: 'Pending', 
+          value: '3 requests', 
+          icon: AlertCircle,
+          color: 'bg-orange-500 text-white'
         },
         { 
-          label: 'Staff Satisfaction', 
-          value: '92%', 
-          change: '+3%', 
-          color: 'text-orange-600', 
-          trend: 'up' 
+          label: 'Team Rating', 
+          value: '4.8/5', 
+          icon: TrendingUp,
+          color: 'bg-purple-500 text-white'
         }
       ];
     case 'employee':
       return [
         { 
           label: 'My Shifts', 
-          value: '12', 
-          change: '+2', 
-          color: 'text-blue-600', 
-          trend: 'up' 
+          value: '5', 
+          icon: Calendar,
+          color: 'bg-blue-500 text-white'
         },
         { 
-          label: 'Hours This Week', 
-          value: '32', 
-          change: '+5', 
-          color: 'text-green-600', 
-          trend: 'up' 
+          label: 'This Week', 
+          value: '32 hours', 
+          icon: Clock,
+          color: 'bg-green-500 text-white'
         },
         { 
-          label: 'Swap Requests', 
-          value: '2', 
-          change: '+1', 
-          color: 'text-purple-600', 
-          trend: 'up' 
+          label: 'Next Shift', 
+          value: 'Tomorrow', 
+          icon: AlertCircle,
+          color: 'bg-orange-500 text-white'
         },
         { 
-          label: 'Performance Score', 
-          value: '88%', 
-          change: '+2%', 
-          color: 'text-orange-600', 
-          trend: 'up' 
+          label: 'Rating', 
+          value: '4.8/5', 
+          icon: TrendingUp,
+          color: 'bg-purple-500 text-white'
         }
       ];
     default:
@@ -168,141 +129,78 @@ const getDashboardStatsByRole = (role: UserRole): DashboardStat[] => {
   }
 };
 
-const getRecentActivityByRole = (role: UserRole): RecentActivity[] => {
+const getRecentActivityByRole = (role: UserRole): ActivityItem[] => {
   switch (role) {
     case 'admin':
       return [
         { 
           id: 'admin-1',
-          action: 'OptaPlanner optimization completed successfully', 
+          title: 'System Optimization Completed',
+          description: 'Schedule optimization finished successfully',
           time: '2 minutes ago', 
-          type: 'system',
-          priority: 'high'
+          type: 'success'
         },
         { 
           id: 'admin-2',
-          action: 'New nurse registered in system', 
-          time: '5 minutes ago', 
-          type: 'user',
-          priority: 'medium'
+          title: 'New Staff Member Added',
+          description: 'Jessica Martinez joined the nursing team',
+          time: '1 hour ago', 
+          type: 'info'
         },
         { 
           id: 'admin-3',
-          action: 'Schedule conflict resolved automatically', 
-          time: '10 minutes ago', 
-          type: 'schedule',
-          priority: 'high'
-        },
-        { 
-          id: 'admin-4',
-          action: 'Department coverage optimized', 
-          time: '15 minutes ago', 
-          type: 'optimization',
-          priority: 'medium'
-        },
-        { 
-          id: 'admin-5',
-          action: 'Overtime budget updated', 
-          time: '1 hour ago', 
-          type: 'budget',
-          priority: 'low'
-        },
-        { 
-          id: 'admin-6',
-          action: 'Staff certification verified', 
-          time: '2 hours ago', 
-          type: 'compliance',
-          priority: 'medium'
+          title: 'Schedule Conflict Resolved',
+          description: 'Automatic conflict resolution applied',
+          time: '3 hours ago', 
+          type: 'success'
         }
       ];
     case 'manager':
       return [
         { 
           id: 'mgr-1',
-          action: 'Team schedule published for next week', 
+          title: 'Weekly Schedule Published',
+          description: 'Next week\'s schedule is now available',
           time: '30 minutes ago', 
-          type: 'schedule',
-          priority: 'high'
+          type: 'success'
         },
         { 
           id: 'mgr-2',
-          action: 'Shift swap request approved', 
-          time: '1 hour ago', 
-          type: 'swap',
-          priority: 'medium'
+          title: 'Shift Swap Approved',
+          description: 'Request from Sarah Johnson approved',
+          time: '2 hours ago', 
+          type: 'info'
         },
         { 
           id: 'mgr-3',
-          action: 'OptaPlanner constraints updated', 
-          time: '2 hours ago', 
-          type: 'optimization',
-          priority: 'medium'
-        },
-        { 
-          id: 'mgr-4',
-          action: 'Staff availability updated', 
-          time: '3 hours ago', 
-          type: 'availability',
-          priority: 'low'
-        },
-        { 
-          id: 'mgr-5',
-          action: 'Coverage gap identified and resolved', 
+          title: 'Coverage Alert',
+          description: 'Low coverage detected for Friday night',
           time: '4 hours ago', 
-          type: 'coverage',
-          priority: 'high'
-        },
-        { 
-          id: 'mgr-6',
-          action: 'Performance review scheduled', 
-          time: '1 day ago', 
-          type: 'review',
-          priority: 'low'
+          type: 'warning'
         }
       ];
     case 'employee':
       return [
         { 
           id: 'emp-1',
-          action: 'Night shift completed successfully', 
+          title: 'Shift Completed',
+          description: 'Successfully completed night shift',
           time: '30 minutes ago', 
-          type: 'shift',
-          priority: 'medium'
+          type: 'success'
         },
         { 
           id: 'emp-2',
-          action: 'Availability updated for next week', 
+          title: 'Availability Updated',
+          description: 'Your availability preferences were saved',
           time: '2 hours ago', 
-          type: 'availability',
-          priority: 'low'
+          type: 'info'
         },
         { 
           id: 'emp-3',
-          action: 'Swap request submitted and pending', 
-          time: '4 hours ago', 
-          type: 'swap',
-          priority: 'medium'
-        },
-        { 
-          id: 'emp-4',
-          action: 'Training session completed', 
+          title: 'Swap Request Pending',
+          description: 'Your shift swap request is under review',
           time: '1 day ago', 
-          type: 'training',
-          priority: 'low'
-        },
-        { 
-          id: 'emp-5',
-          action: 'Overtime hours logged', 
-          time: '1 day ago', 
-          type: 'overtime',
-          priority: 'medium'
-        },
-        { 
-          id: 'emp-6',
-          action: 'Schedule preferences updated', 
-          time: '2 days ago', 
-          type: 'preferences',
-          priority: 'low'
+          type: 'warning'
         }
       ];
     default:
@@ -315,94 +213,82 @@ const getQuickActionsByRole = (role: UserRole): QuickAction[] => {
     case 'admin':
       return [
         { 
-          id: 'admin-opt',
-          label: 'Run OptaPlanner', 
-          icon: '🎯', 
-          color: 'bg-purple-600 hover:bg-purple-700', 
-          action: 'optimize' 
-        },
-        { 
           id: 'admin-staff',
-          label: 'Staff Management', 
-          icon: '👥', 
+          label: 'Manage Staff', 
+          icon: Users, 
           color: 'bg-blue-600 hover:bg-blue-700', 
-          action: 'staff' 
+          action: 'staff',
+          description: 'Add, edit, or view staff members'
         },
         { 
-          id: 'admin-settings',
-          label: 'System Settings', 
-          icon: '⚙️', 
-          color: 'bg-gray-600 hover:bg-gray-700', 
-          action: 'settings' 
+          id: 'admin-schedules',
+          label: 'View Schedules', 
+          icon: Calendar, 
+          color: 'bg-green-600 hover:bg-green-700', 
+          action: 'schedules',
+          description: 'Review and manage all schedules'
         },
         { 
           id: 'admin-reports',
           label: 'Generate Reports', 
-          icon: '📈', 
-          color: 'bg-green-600 hover:bg-green-700', 
-          action: 'reports' 
+          icon: Activity, 
+          color: 'bg-purple-600 hover:bg-purple-700', 
+          action: 'reports',
+          description: 'Create performance and analytics reports'
         }
       ];
     case 'manager':
       return [
         { 
-          id: 'mgr-publish',
-          label: 'Publish Schedule', 
-          icon: '📅', 
+          id: 'mgr-schedule',
+          label: 'Build Schedule', 
+          icon: Calendar, 
           color: 'bg-blue-600 hover:bg-blue-700', 
-          action: 'publish' 
-        },
-        { 
-          id: 'mgr-review',
-          label: 'Review Requests', 
-          icon: '📋', 
-          color: 'bg-green-600 hover:bg-green-700', 
-          action: 'review' 
+          action: 'schedule',
+          description: 'Create and publish team schedules'
         },
         { 
           id: 'mgr-team',
           label: 'Team Overview', 
-          icon: '👥', 
-          color: 'bg-purple-600 hover:bg-purple-700', 
-          action: 'team' 
+          icon: Users, 
+          color: 'bg-green-600 hover:bg-green-700', 
+          action: 'team',
+          description: 'View team performance and availability'
         },
         { 
-          id: 'mgr-optimize',
-          label: 'Optimize Shifts', 
-          icon: '🎯', 
+          id: 'mgr-requests',
+          label: 'Review Requests', 
+          icon: AlertCircle, 
           color: 'bg-orange-600 hover:bg-orange-700', 
-          action: 'optimize' 
+          action: 'requests',
+          description: 'Approve or deny time-off and swap requests'
         }
       ];
     case 'employee':
       return [
         { 
           id: 'emp-schedule',
-          label: 'View Schedule', 
-          icon: '📅', 
+          label: 'My Schedule', 
+          icon: Calendar, 
           color: 'bg-blue-600 hover:bg-blue-700', 
-          action: 'schedule' 
+          action: 'schedule',
+          description: 'View your upcoming shifts'
+        },
+        { 
+          id: 'emp-availability',
+          label: 'Set Availability', 
+          icon: Clock, 
+          color: 'bg-green-600 hover:bg-green-700', 
+          action: 'availability',
+          description: 'Update your available times'
         },
         { 
           id: 'emp-swap',
           label: 'Request Swap', 
-          icon: '🔄', 
-          color: 'bg-green-600 hover:bg-green-700', 
-          action: 'swap' 
-        },
-        { 
-          id: 'emp-availability',
-          label: 'Update Availability', 
-          icon: '✅', 
+          icon: ArrowRight, 
           color: 'bg-purple-600 hover:bg-purple-700', 
-          action: 'availability' 
-        },
-        { 
-          id: 'emp-hours',
-          label: 'Log Hours', 
-          icon: '⏰', 
-          color: 'bg-orange-600 hover:bg-orange-700', 
-          action: 'hours' 
+          action: 'swap',
+          description: 'Request to swap shifts with colleagues'
         }
       ];
     default:
@@ -410,120 +296,94 @@ const getQuickActionsByRole = (role: UserRole): QuickAction[] => {
   }
 };
 
-// Components
+// Simplified Components
 const StatCard: React.FC<{ stat: DashboardStat }> = ({ stat }) => {
-  const { colorClass, symbol } = formatChange(stat.change, stat.trend);
+  const Icon = stat.icon;
   
   return (
-    <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow duration-200">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-1">{stat.label}</p>
-          <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+          <p className="text-sm font-medium text-gray-600 mb-2">{stat.label}</p>
+          <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
         </div>
-        <div className="text-right ml-4">
-          <div className={`flex items-center ${colorClass} text-sm font-medium`}>
-            <span className="mr-1">{symbol}</span>
-            <span>{stat.change}</span>
-          </div>
+        <div className={`p-3 rounded-lg ${stat.color}`}>
+          <Icon className="w-6 h-6" />
         </div>
       </div>
     </div>
   );
 };
 
-const ActivityItem: React.FC<{ activity: RecentActivity }> = ({ activity }) => {
-  const priorityColor = {
-    high: 'border-l-red-500',
-    medium: 'border-l-yellow-500',
-    low: 'border-l-green-500'
-  }[activity.priority];
+const ActivityCard: React.FC<{ activity: ActivityItem }> = ({ activity }) => {
+  const getIcon = () => {
+    switch (activity.type) {
+      case 'success': return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'warning': return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+      case 'info': return <Activity className="w-5 h-5 text-blue-500" />;
+    }
+  };
 
   return (
-    <div className={`flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg border-l-4 ${priorityColor} transition-colors duration-150`}>
-      <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-        <span className="text-sm" role="img" aria-label={activity.type}>
-          {ACTIVITY_ICONS[activity.type]}
-        </span>
+    <div className="flex items-start space-x-3 p-4 hover:bg-gray-50 rounded-lg transition-colors duration-150">
+      <div className="flex-shrink-0 mt-1">
+        {getIcon()}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 leading-relaxed">{activity.action}</p>
+        <p className="font-medium text-gray-900">{activity.title}</p>
+        <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
         <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
       </div>
     </div>
   );
 };
 
-const QuickActionButton: React.FC<{ action: QuickAction; onClick: (actionId: string) => void }> = ({ 
+const QuickActionCard: React.FC<{ action: QuickAction; onClick: (actionId: string) => void }> = ({ 
   action, 
   onClick 
 }) => {
+  const Icon = action.icon;
+  
   return (
     <button
       onClick={() => onClick(action.action)}
-      disabled={action.disabled}
-      className={`${action.color} text-white px-4 py-3 rounded-lg transition-all duration-200 
-                 flex flex-col items-center space-y-2 disabled:opacity-50 disabled:cursor-not-allowed
-                 hover:transform hover:-translate-y-0.5 hover:shadow-lg`}
-      aria-label={action.label}
+      className={`${action.color} text-white p-6 rounded-xl transition-all duration-200 
+                 text-left w-full hover:transform hover:-translate-y-1 hover:shadow-lg group`}
     >
-      <span className="text-2xl" role="img" aria-hidden="true">{action.icon}</span>
-      <span className="text-sm font-medium text-center">{action.label}</span>
+      <div className="flex items-center justify-between mb-3">
+        <Icon className="w-6 h-6" />
+        <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+      <h3 className="font-semibold text-lg mb-1">{action.label}</h3>
+      <p className="text-sm opacity-90">{action.description}</p>
     </button>
   );
 };
 
-const SchedulePreview: React.FC<{ role: UserRole }> = ({ role }) => {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  
-  const getScheduleData = (dayIndex: number) => {
-    if (role === 'employee') {
-      return dayIndex < 5 ? 'Day Shift' : 'Off';
-    }
-    // For admin/manager, show staff count
-    return `${Math.floor(Math.random() * 20) + 15} staff`;
-  };
-
-  return (
-    <div className="grid grid-cols-7 gap-2">
-      {days.map((day, index) => (
-        <div key={day} className="text-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150">
-          <p className="text-sm font-medium text-gray-900 mb-1">{day}</p>
-          <p className="text-xs text-gray-600">
-            {getScheduleData(index)}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const OptaPlannerStatus: React.FC = () => {
-  const metrics = [
-    { label: 'Schedule Coverage', value: '98.5%', color: 'text-blue-600' },
-    { label: 'Optimization Time', value: '2.3s', color: 'text-green-600' },
-    { label: 'Constraints Met', value: '156', color: 'text-purple-600' }
+const WeeklySchedule: React.FC<{ role: UserRole }> = ({ role }) => {
+  const days = [
+    { name: 'Mon', date: '18', shift: role === 'employee' ? 'Day Shift' : '15 staff' },
+    { name: 'Tue', date: '19', shift: role === 'employee' ? 'Off' : '12 staff' },
+    { name: 'Wed', date: '20', shift: role === 'employee' ? 'Night Shift' : '18 staff' },
+    { name: 'Thu', date: '21', shift: role === 'employee' ? 'Day Shift' : '20 staff' },
+    { name: 'Fri', date: '22', shift: role === 'employee' ? 'Evening' : '14 staff' },
+    { name: 'Sat', date: '23', shift: role === 'employee' ? 'Off' : '10 staff' },
+    { name: 'Sun', date: '24', shift: role === 'employee' ? 'Off' : '8 staff' },
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">OptaPlanner Optimization Status</h2>
-        <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-            Active
-          </span>
+    <div className="grid grid-cols-7 gap-3">
+      {days.map((day) => (
+        <div key={day.name} className={`text-center p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
+          day.shift === 'Off' ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+        }`}>
+          <p className="font-semibold text-gray-900">{day.name}</p>
+          <p className="text-2xl font-bold text-gray-800 my-1">{day.date}</p>
+          <p className={`text-xs font-medium ${day.shift === 'Off' ? 'text-gray-500' : 'text-blue-600'}`}>
+            {day.shift}
+          </p>
         </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {metrics.map((metric, index) => (
-          <div key={index} className="text-center p-4 bg-gray-50 rounded-lg">
-            <p className={`text-2xl font-bold ${metric.color} mb-1`}>{metric.value}</p>
-            <p className="text-sm text-gray-600">{metric.label}</p>
-          </div>
-        ))}
-      </div>
+      ))}
     </div>
   );
 };
@@ -542,88 +402,55 @@ export const Dashboard: React.FC = () => {
   const handleQuickAction = useCallback((actionId: string) => {
     console.log(`Executing action: ${actionId}`);
     // Here you would implement the actual action logic
-    // For now, just logging for demonstration
   }, []);
-
-  const getRoleDisplayName = (role: UserRole) => {
-    const roleNames = {
-      admin: 'System Administrator',
-      manager: 'Department Manager',
-      employee: 'Healthcare Professional'
-    };
-    return roleNames[role] || 'User';
-  };
-
-  const getWelcomeMessage = (role: UserRole) => {
-    const messages = {
-      admin: 'Monitor system performance and optimize schedules with OptaPlanner.',
-      manager: 'Manage your team schedules and review staff requests.',
-      employee: 'View your schedule and manage your work preferences.'
-    };
-    return messages[role] || 'Welcome to your dashboard.';
-  };
 
   return (
     <Layout>
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between">
+      <div className="p-6 max-w-7xl mx-auto space-y-8">
+        {/* Welcome Section */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-1">Healthcare Roster Dashboard</h1>
-              <p className="text-slate-600 mb-1">Welcome back, <span className="font-semibold text-slate-800">{user?.name}</span>!</p>
-              <div className="flex items-center space-x-2 text-sm text-slate-500">
-                <span className="inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-200 font-medium">
-                  {getRoleDisplayName(userRole)}
-                </span>
-                <span className="text-xs text-green-500 flex items-center">
-                  <span className="w-2 h-2 bg-green-400 rounded-full mr-1 inline-block"></span>
-                  Online
-                </span>
-                <span className="text-xs">• Last updated: {new Date().toLocaleTimeString()}</span>
+              <h1 className="text-3xl font-bold mb-2">
+                {getWelcomeMessage(userRole, user?.name || 'User')}
+              </h1>
+              <p className="text-blue-100 text-lg">
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
+                <p className="text-sm opacity-90">Role</p>
+                <p className="font-semibold capitalize">{userRole}</p>
               </div>
-              <p className="text-xs text-slate-400 mt-2">{getWelcomeMessage(userRole)}</p>
             </div>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
             <StatCard key={`${userRole}-stat-${index}`} stat={stat} />
           ))}
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-                <span className="text-sm text-gray-500">
-                  {activities.length} recent items
-                </span>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {activities.map((activity) => (
-                  <ActivityItem key={activity.id} activity={activity} />
-                ))}
-              </div>
-            </div>
-          </div>
-
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Quick Actions */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-4">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Quick Actions</h2>
+                <Plus className="w-5 h-5 text-gray-400" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {quickActions.map((action) => (
-                  <QuickActionButton 
+                  <QuickActionCard 
                     key={action.id} 
                     action={action} 
                     onClick={handleQuickAction}
@@ -632,52 +459,36 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* OptaPlanner Status - Admin Only */}
-        {userRole === 'admin' && (
-          <div className="mb-8">
-            <OptaPlannerStatus />
-          </div>
-        )}
-
-        {/* Schedule Preview */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {userRole === 'employee' ? 'My Schedule This Week' : 'Department Schedule Overview'}
-            </h2>
-            <button className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors duration-150">
-              View Full Schedule →
-            </button>
-          </div>
-          <SchedulePreview role={userRole} />
-        </div>
-
-        {/* Performance Insights - Manager & Admin */}
-        {(userRole === 'admin' || userRole === 'manager') && (
-          <div className="mt-8 bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Insights</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600">95.2%</p>
-                <p className="text-sm text-gray-600">On-time Attendance</p>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <p className="text-2xl font-bold text-green-600">4.8/5</p>
-                <p className="text-sm text-gray-600">Staff Satisfaction</p>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <p className="text-2xl font-bold text-purple-600">12%</p>
-                <p className="text-sm text-gray-600">Efficiency Gain</p>
-              </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <p className="text-2xl font-bold text-orange-600">3.2h</p>
-                <p className="text-sm text-gray-600">Avg. Overtime</p>
-              </div>
+          {/* Recent Activity */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                {activities.length} items
+              </span>
+            </div>
+            <div className="space-y-1">
+              {activities.map((activity) => (
+                <ActivityCard key={activity.id} activity={activity} />
+              ))}
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Schedule Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {userRole === 'employee' ? 'My Schedule This Week' : 'Team Schedule Overview'}
+            </h2>
+            <button className="flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors">
+              View Full Schedule
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+          <WeeklySchedule role={userRole} />
+        </div>
       </div>
     </Layout>
   );

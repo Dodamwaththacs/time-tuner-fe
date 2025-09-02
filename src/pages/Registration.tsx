@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, ArrowRight, CheckCircle, Building, MapPin, Phone, CreditCard, Star, Check, X, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import { organizationAPI } from '../api/organizations';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserRole } from '../contexts/AuthContext';
@@ -27,6 +28,11 @@ export const Registration: React.FC = () => {
         user_email: '',
         user_password: ''
     });
+
+    //add UUID for organization_code
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, organization_code: uuidv4() }));
+    }, []);
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -214,20 +220,21 @@ export const Registration: React.FC = () => {
             console.log('Organization created:', orgResponse);
 
             // Then create the user account
-            // const userSuccess = await signup(
-            //     formData.user_email,
-            //     formData.user_password,
-            //     formData.user_name,
-            //     formData.user_role
-            // );
+            const userSuccess = await signup(
+                formData.user_email,
+                formData.user_password,
+                formData.user_name,
+                formData.user_role
+            );
 
-            // if (userSuccess) {
-            //     console.log('Registration successful:', orgResponse);
-            //     alert('Registration successful! Welcome to Time Tuner.');
-            //     navigate('/dashboard');
-            // } else {
-            //     alert('User account creation failed. Please try again.');
-            // }
+            if (userSuccess) {
+                console.log('Registration successful:', orgResponse);
+                alert('Registration successful! Welcome to Time Tuner.');
+                navigate('/dashboard');
+            } else {
+                alert('User account creation failed. Please try again.');
+            }
+
         } catch (error) {
             console.error('Registration error:', error);
             alert('An error occurred during registration. Please try again.');
@@ -331,7 +338,7 @@ export const Registration: React.FC = () => {
                                 {errors.organization_name && <p className="text-red-400 text-sm mt-1">{errors.organization_name}</p>}
                             </div>
 
-                            <div>
+                            {/* <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">
                                     Organization Code *
                                 </label>
@@ -345,7 +352,7 @@ export const Registration: React.FC = () => {
                                     placeholder="e.g., MGH001, SFGH002"
                                 />
                                 {errors.organization_code && <p className="text-red-400 text-sm mt-1">{errors.organization_code}</p>}
-                            </div>
+                            </div> */}
                         </div>
 
                         <div>
