@@ -80,7 +80,7 @@ export const Home: React.FC = () => {
             
             <p className="text-xl text-slate-300 mb-12 leading-relaxed max-w-3xl mx-auto">
               Streamline your healthcare organization's scheduling, roster management, and compliance with our enterprise-grade platform. 
-              Join thousands of healthcare professionals who trust MedRoster Pro.
+              Join thousands of healthcare professionals who trust Time Tuner.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">

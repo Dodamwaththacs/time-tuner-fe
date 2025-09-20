@@ -113,8 +113,8 @@ const navItems: NavItem[] = [
     subItems: [
       { label: 'Current Schedules', path: '/schedules/current', icon: Calendar, roles: ['manager'] },
       { label: 'Schedule Builder', path: '/schedules/builder', icon: Plus, roles: ['manager'] },
-      { label: 'Optimization Engine', path: '/schedules/optimize', icon: Target, roles: ['manager'] },
-      { label: 'Schedule Builder Temp', path: '/schedules/builder-temp', icon: Plus, roles: ['manager'] }
+      // { label: 'Optimization Engine', path: '/schedules/optimize', icon: Target, roles: ['manager'] },
+      // { label: 'Schedule Builder Temp', path: '/schedules/builder-temp', icon: Plus, roles: ['manager'] }
     ]
   },
   {
@@ -124,8 +124,8 @@ const navItems: NavItem[] = [
     roles: ['manager'],
     subItems: [
       { label: 'Employee Profiles', path: '/team/profiles', icon: Users, roles: ['manager'] },
-      { label: 'Skills Matrix', path: '/team/skills', icon: Award, roles: ['manager'] },
-      { label: 'Availability', path: '/team/availability', icon: Clock, roles: ['manager'] }
+      // { label: 'Skills Matrix', path: '/team/skills', icon: Award, roles: ['manager'] },
+      // { label: 'Availability', path: '/team/availability', icon: Clock, roles: ['manager'] }
     ]
   },
   {
@@ -135,8 +135,8 @@ const navItems: NavItem[] = [
     roles: ['manager'],
     subItems: [
       { label: 'Time-off Requests', path: '/approvals/timeoff', icon: Calendar, roles: ['manager'] },
-      { label: 'Shift Swaps', path: '/approvals/swaps', icon: Clock, roles: ['manager'] },
-      { label: 'Overtime Requests', path: '/approvals/overtime', icon: TrendingUp, roles: ['manager'] }
+      // { label: 'Shift Swaps', path: '/approvals/swaps', icon: Clock, roles: ['manager'] },
+      // { label: 'Overtime Requests', path: '/approvals/overtime', icon: TrendingUp, roles: ['manager'] }
     ]
   },
   {
@@ -184,12 +184,12 @@ const navItems: NavItem[] = [
     icon: Users,
     roles: ['employee']
   },
-  {
-    label: 'Time Tracking',
-    path: '/time-tracking',
-    icon: Clock,
-    roles: ['employee']
-  },
+  // {
+  //   label: 'Time Tracking',
+  //   path: '/time-tracking',
+  //   icon: Clock,
+  //   roles: ['employee']
+  // },
 
   // Common Navigation
   {

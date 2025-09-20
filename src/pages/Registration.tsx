@@ -89,7 +89,7 @@ export const Registration: React.FC = () => {
 
     const countries = [
         'United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 
-        'France', 'Japan', 'Singapore', 'Netherlands', 'Sweden', 'Switzerland'
+        'France', 'Japan', 'Singapore', 'Netherlands', 'Sweden', 'Switzerland','Sri Lanka'
     ];
 
     const subscriptionPlans = [
@@ -703,7 +703,7 @@ export const Registration: React.FC = () => {
                             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center">
                                 <Heart className="w-7 h-7 text-white" />
                             </div>
-                            <span className="text-2xl font-bold text-white">MedRoster Pro</span>
+                            <span className="text-2xl font-bold text-white">Time Tuner</span>
                         </div>
                         
                         <button
@@ -738,7 +738,7 @@ export const Registration: React.FC = () => {
                         <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center">
                             <Heart className="w-7 h-7 text-white" />
                         </div>
-                        <span className="text-2xl font-bold text-white">MedRoster Pro</span>
+                        <span className="text-2xl font-bold text-white">Time Tuner</span>
                     </div>
                     
                     <div className="hidden md:flex items-center space-x-8">
@@ -760,7 +760,7 @@ export const Registration: React.FC = () => {
                     <div className="text-center mb-12">
                         <h1 className="text-4xl font-bold text-white mb-4">Register Your Organization</h1>
                         <p className="text-xl text-slate-300">
-                            Join thousands of healthcare organizations using MedRoster Pro
+                            Join thousands of healthcare organizations using Time Tuner
                         </p>
                     </div>
 
@@ -823,12 +823,12 @@ export const Registration: React.FC = () => {
                         <div className="mt-8 text-center">
                             <p className="text-slate-400 text-sm">
                                 Need help? Contact our support team at{' '}
-                                <a href="mailto:support@medroster.com" className="text-blue-400 hover:text-blue-300 transition-colors">
-                                    support@medroster.com
+                                <a href="mailto:support@time-tuner.com" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                    support@time-tuner.com
                                 </a>
                                 {' '}or call{' '}
-                                <a href="tel:+1-800-MEDROST" className="text-blue-400 hover:text-blue-300 transition-colors">
-                                    +1-800-MEDROST
+                                <a href="tel:+1-800-TIME-TUNER" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                    +1-800-TIME-TUNER
                                 </a>
                             </p>
                         </div>

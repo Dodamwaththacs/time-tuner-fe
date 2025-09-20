@@ -47,25 +47,25 @@ const getDashboardStatsByRole = (role: UserRole): DashboardStat[] => {
       return [
         { 
           label: 'Total Staff', 
-          value: '156', 
+          value: '0', 
           icon: Users,
           color: 'bg-blue-500 text-white'
         },
         { 
           label: 'Active Shifts', 
-          value: '24', 
+          value: '0', 
           icon: Clock,
           color: 'bg-green-500 text-white'
         },
         { 
           label: 'Coverage', 
-          value: '98.5%', 
+          value: '-', 
           icon: CheckCircle,
           color: 'bg-purple-500 text-white'
         },
         { 
           label: 'Performance', 
-          value: 'Excellent', 
+          value: '-', 
           icon: TrendingUp,
           color: 'bg-orange-500 text-white'
         }

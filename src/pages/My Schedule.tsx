@@ -10,28 +10,13 @@ import {
     Mail,
     Building2,
     CalendarDays,
-   
 } from "lucide-react";
 
-// Personal Schedule Interfaces
-export interface PersonalShift {
-    id: string;
-    date: Date;
-    startTime: Date;
-    endTime: Date;
-    shiftType: {
-        name: string;
-        color: string;
-    };
-    department: {
-        name: string;
-        location: string;
-    };
-    role: string;
-    status: "scheduled" | "confirmed" | "completed" | "cancelled";
-    notes?: string;
+// import PersonalShift interface from API module
+import type { PersonalShift } from "../api/rosterAssigns";
+import { personalScheduleAPI } from "../api/rosterAssigns";
 
-}
+
 
 export interface TimeOffRequest {
     id: string;
@@ -66,9 +51,9 @@ export interface EmployeeProfile {
     contractType: string;
     workingHours: {
         totalHours: number;
-
     };
 }
+
 
 // Dummy Data Generator for Personal Schedule
 const generatePersonalScheduleData = () => {
@@ -93,8 +78,7 @@ const generatePersonalScheduleData = () => {
     const shiftTypes = [
         { name: "Day Shift", start: "07:00", end: "15:00", color: "bg-blue-100 text-blue-800" },
         { name: "Evening Shift", start: "15:00", end: "23:00", color: "bg-orange-100 text-orange-800" },
-        { name: "Night Shift", start: "23:00", end: "07:00", color: "bg-purple-100 text-purple-800" },
-        { name: "Weekend Day", start: "08:00", end: "20:00", color: "bg-green-100 text-green-800" },
+       
     ];
 
     const shifts: PersonalShift[] = [];
@@ -102,51 +86,7 @@ const generatePersonalScheduleData = () => {
     const availability: PersonalAvailability[] = [];
     const today = new Date();
 
-    // Generate personal shifts for next 30 days
-    for (let day = -7; day < 23; day++) {
-        const currentDate = new Date(today);
-        currentDate.setDate(today.getDate() + day);
-
-        // Skip some days (employee doesn't work every day)
-        if (Math.random() < 0.4) continue;
-
-        const shiftType = shiftTypes[Math.floor(Math.random() * shiftTypes.length)];
-
-        const startTime = new Date(currentDate);
-        const [startHour, startMinute] = shiftType.start.split(':').map(Number);
-        startTime.setHours(startHour, startMinute, 0, 0);
-
-        const endTime = new Date(currentDate);
-        const [endHour, endMinute] = shiftType.end.split(':').map(Number);
-        endTime.setHours(endHour, endMinute, 0, 0);
-        if (endHour < startHour) {
-            endTime.setDate(endTime.getDate() + 1);
-        }
-
-        const statuses: ("scheduled" | "confirmed" | "completed" | "cancelled")[] =
-            day < 0 ? ["completed"] :
-                day === 0 ? ["confirmed"] :
-                    ["scheduled", "confirmed"];
-
-        shifts.push({
-            id: `shift_${day}`,
-            date: currentDate,
-            startTime,
-            endTime,
-            shiftType: {
-                name: shiftType.name,
-                color: shiftType.color,
-            },
-            department: {
-                name: employee.department,
-                location: "Ground Floor",
-            },
-            role: employee.role,
-            status: statuses[Math.floor(Math.random() * statuses.length)],
-            notes: Math.random() > 0.7 ? "Please arrive 15 minutes early for handover" : undefined,
-
-        });
-    }
+    
 
     // Generate time off requests
     const timeOffTypes: ("vacation" | "sick" | "personal" | "emergency")[] = ["vacation", "sick", "personal", "emergency"];
@@ -181,12 +121,18 @@ export const MySchedule: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [statusFilter, setStatusFilter] = useState<string>("");
 
+
+    
     useEffect(() => {
         // Simulate API call for personal schedule
         const loadPersonalSchedule = async () => {
             const data = generatePersonalScheduleData();
+
             setEmployee(data.employee);
-            setShifts(data.shifts);
+            const shiftsData = await personalScheduleAPI.getShiftsByEmployee();
+
+            setShifts(shiftsData);
+            console.log(shiftsData);
             setTimeOffRequests(data.timeOffRequests);
         };
 
