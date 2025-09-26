@@ -15,35 +15,21 @@ import {
 import { departmentAPI } from "../../api/department";
 import { contractAPI } from "../../api/contract";
 import { roleAPI } from "../../api/role";
+import { skillAPI } from "../../api/skill";
 import type { Department } from "../../api/department";
 import type { ContractType } from "../../api/contract";
 import type { Role } from "../../api/role";
 
 interface Skill {
-  name: string;
-  proficiency: "CERTIFIED" | "EXPERIENCED" | "EXPERT" | null;
+  id: string;
+  skillName: string;
+  description: string;
 }
 
-
-const availableSkills = [
-  "ACLS",
-  "BLS",
-  "Pediatric Care",
-  "Critical Care",
-  "Emergency Medicine",
-  "ICU Experience",
-  "Surgical Nursing",
-  "Cardiac Care",
-  "Neonatal Care",
-  "Geriatric Care",
-  "Mental Health",
-  "Wound Care",
-  "IV Therapy",
-  "Medication Administration",
-  "Patient Assessment",
-  "Vital Signs Monitoring",
-];
-
+interface EmployeeSkill {
+  skill: Skill;
+  proficiency: "CERTIFIED" | "EXPERIENCED" | "EXPERT" | null;
+}
 
 
 
@@ -61,6 +47,7 @@ export const AddEmployee: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [contracts, setContracts] = useState<ContractType[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +74,11 @@ export const AddEmployee: React.FC = () => {
         setRoles(activeRoles);
         console.log("Loaded roles:", activeRoles);
 
+        // Fetch skills
+        const skillsResponse = await skillAPI.getAllSkills();
+        console.log("Fetched skills:", skillsResponse);
+        setSkills(skillsResponse);
+
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Failed to load data. Please try again.");
@@ -112,7 +104,7 @@ export const AddEmployee: React.FC = () => {
     hireDate: "",
     contract: "",
     salary: "",
-    skills: [] as Skill[],
+    skills: [] as EmployeeSkill[],
     avatar: null as File | null,
   });
 
@@ -146,26 +138,26 @@ export const AddEmployee: React.FC = () => {
     }
   };
 
-  const handleSkillToggle = (skillName: string) => {
+  const handleSkillToggle = (skill: Skill) => {
     setFormData((prev) => {
-      const existing = prev.skills.find((s) => s.name === skillName);
+      const existing = prev.skills.find((s) => s.skill.id === skill.id);
       return existing
-        ? { ...prev, skills: prev.skills.filter((s) => s.name !== skillName) }
+        ? { ...prev, skills: prev.skills.filter((s) => s.skill.id !== skill.id) }
         : {
             ...prev,
-            skills: [...prev.skills, { name: skillName, proficiency: null }],
+            skills: [...prev.skills, { skill, proficiency: null }],
           };
     });
   };
 
   const handleProficiencyChange = (
-    skillName: string,
-    level: Skill["proficiency"]
+    skill: Skill,
+    level: "CERTIFIED" | "EXPERIENCED" | "EXPERT"
   ) => {
     setFormData((prev) => ({
       ...prev,
-      skills: prev.skills.map((skill) =>
-        skill.name === skillName ? { ...skill, proficiency: level } : skill
+      skills: prev.skills.map((employeeSkill) =>
+        employeeSkill.skill.id === skill.id ? { ...employeeSkill, proficiency: level } : employeeSkill
       ),
     }));
   };
@@ -179,6 +171,7 @@ export const AddEmployee: React.FC = () => {
     e.preventDefault();
     if (!validateForm()) return;
     setIsSubmitting(true);
+    console.log("Form Data Submitted:", formData);
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
     } catch (err) {
@@ -199,7 +192,7 @@ export const AddEmployee: React.FC = () => {
       hireDate: "",
       contract: "",
       salary: "",
-      skills: [],
+      skills: [] as EmployeeSkill[],
       avatar: null,
       contractStart: "",
       contractEnd: "",
@@ -546,15 +539,15 @@ export const AddEmployee: React.FC = () => {
                   Skills & Proficiency
                 </label>
                 <div className="space-y-2">
-                  {availableSkills.map((skillName) => {
+                  {skills.map((skill) => {
                     const selectedSkill = formData.skills.find(
-                      (s) => s.name === skillName
+                      (s) => s.skill.id === skill.id
                     );
                     const isSelected = !!selectedSkill;
 
                     return (
                       <div
-                        key={skillName}
+                        key={skill.id}
                         className="border rounded p-2 text-sm"
                       >
                         <div className="flex items-center justify-between">
@@ -562,10 +555,13 @@ export const AddEmployee: React.FC = () => {
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => handleSkillToggle(skillName)}
+                              onChange={() => handleSkillToggle(skill)}
                               className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                             />
-                            <span className="text-gray-800">{skillName}</span>
+                            <div>
+                              <span className="text-gray-800">{skill.skillName}</span>
+                              <p className="text-xs text-gray-500 mt-1">{skill.description}</p>
+                            </div>
                           </label>
 
                           {isSelected && (
@@ -579,13 +575,13 @@ export const AddEmployee: React.FC = () => {
                                 >
                                   <input
                                     type="radio"
-                                    name={`proficiency-${skillName}`}
+                                    name={`proficiency-${skill.id}`}
                                     value={level}
                                     checked={
                                       selectedSkill?.proficiency === level
                                     }
                                     onChange={() =>
-                                      handleProficiencyChange(skillName, level)
+                                      handleProficiencyChange(skill, level)
                                     }
                                     className="h-3 w-3 text-blue-600 focus:ring-blue-500"
                                   />
@@ -752,16 +748,16 @@ export const AddEmployee: React.FC = () => {
                       Skills
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {formData.skills.map((skill) => (
+                      {formData.skills.map((employeeSkill) => (
                         <span
-                          key={skill.name}
+                          key={employeeSkill.skill.id}
                           className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-100 text-blue-800"
                         >
                           <Award className="w-3 h-3 mr-1" />
-                          {skill.name}
-                          {skill.proficiency && (
+                          {employeeSkill.skill.skillName}
+                          {employeeSkill.proficiency && (
                             <span className="ml-1 text-blue-600 font-medium">
-                              ({skill.proficiency})
+                              ({employeeSkill.proficiency})
                             </span>
                           )}
                         </span>
@@ -799,6 +795,7 @@ export const AddEmployee: React.FC = () => {
                 type="submit"
                 disabled={isSubmitting}
                 className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                onClick={handleSubmit}
               >
                 {isSubmitting ? (
                   <>
