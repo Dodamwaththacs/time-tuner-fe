@@ -240,7 +240,7 @@ const MyProfile: React.FC = () => {
               </div>
               
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              {/* <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <button className="flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-xl transition-all hover:scale-105 font-semibold">
                   <Edit size={18} />
                   Edit Profile
@@ -249,7 +249,7 @@ const MyProfile: React.FC = () => {
                   <Settings size={18} />
                   Settings
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

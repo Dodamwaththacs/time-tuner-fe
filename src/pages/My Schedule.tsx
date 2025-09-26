@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 // import PersonalShift interface from API module
-import type { PersonalShift } from "../api/rosterAssigns";
+import type { PersonalShiftConverted } from "../api/rosterAssigns";
 import { personalScheduleAPI } from "../api/rosterAssigns";
 
 
@@ -54,10 +54,7 @@ export interface EmployeeProfile {
     };
 }
 
-
-// Dummy Data Generator for Personal Schedule
 const generatePersonalScheduleData = () => {
-    // Current employee profile
     const employee: EmployeeProfile = {
         id: "emp001",
         employeeCode: "E001",
@@ -75,13 +72,8 @@ const generatePersonalScheduleData = () => {
         },
     };
 
-    const shiftTypes = [
-        { name: "Day Shift", start: "07:00", end: "15:00", color: "bg-blue-100 text-blue-800" },
-        { name: "Evening Shift", start: "15:00", end: "23:00", color: "bg-orange-100 text-orange-800" },
-       
-    ];
 
-    const shifts: PersonalShift[] = [];
+    const shifts: PersonalShiftConverted[] = [];
     const timeOffRequests: TimeOffRequest[] = [];
     const availability: PersonalAvailability[] = [];
     const today = new Date();
@@ -114,7 +106,7 @@ const generatePersonalScheduleData = () => {
 
 export const MySchedule: React.FC = () => {
     const [employee, setEmployee] = useState<EmployeeProfile | null>(null);
-    const [shifts, setShifts] = useState<PersonalShift[]>([]);
+    const [shifts, setShifts] = useState<PersonalShiftConverted[]>([]);
     const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<"calendar" | "upcoming">("calendar");
@@ -679,29 +671,6 @@ export const MySchedule: React.FC = () => {
                     </div>
                 </div>
 
-                {/* <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center">
-            <Timer className="w-8 h-8 text-orange-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">Overtime</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {employee?.workingHours.overtimeHours || 0}h
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center">
-            <Target className="w-8 h-8 text-purple-600" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-500">PTO Balance</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {employee?.workingHours.remainingPTO || 0}
-              </p>
-            </div>
-          </div>
-        </div> */}
             </div>
 
             {/* Main Content */}
