@@ -14,8 +14,10 @@ import {
 
 import { departmentAPI } from "../../api/department";
 import { contractAPI } from "../../api/contract";
+import { roleAPI } from "../../api/role";
 import type { Department } from "../../api/department";
 import type { ContractType } from "../../api/contract";
+import type { Role } from "../../api/role";
 
 interface Skill {
   name: string;
@@ -42,12 +44,9 @@ const availableSkills = [
   "Vital Signs Monitoring",
 ];
 
-// const contracts = [
-//   { id: "full-time", contractName: "Full Time" },
-//   { id: "part-time", contractName: "Part Time" },
-//   { id: "contract", contractName: "Contract" },
-//   { id: "internship", contractName: "Internship" },
-// ];
+
+
+
 
 const steps = [
   { id: 1, name: "Basic Information", icon: UserPlus },
@@ -61,42 +60,42 @@ export const AddEmployee: React.FC = () => {
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [contracts, setContracts] = useState<ContractType[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const response = await departmentAPI.getAllByOrganization();
-        console.log("Fetched departments:", response);
-        setDepartments(response);
-      } catch (error) {
-        console.error("Error fetching departments:", error);
-        setError("Failed to load departments. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    const fetchContracts = async () => {
-      setIsLoading(true);
-      setError(null);
+        // Fetch departments
+        const departmentsResponse = await departmentAPI.getAllByOrganization();
+        console.log("Fetched departments:", departmentsResponse);
+        setDepartments(departmentsResponse);
 
-      try {
-        const response = await contractAPI.getAllContractTypes();
-        console.log("Fetched contracts:", response);
-        setContracts(response);
+        // Fetch contracts
+        const contractsResponse = await contractAPI.getAllContractTypes();
+        console.log("Fetched contracts:", contractsResponse);
+        setContracts(contractsResponse);
+
+        // Load roles from API
+        const rolesResponse = await roleAPI.getAllRoles();
+        const activeRoles = rolesResponse.filter(role => role.active);
+        setRoles(activeRoles);
+        console.log("Loaded roles:", activeRoles);
+
       } catch (error) {
-        console.error("Error fetching contracts:", error);
-        setError("Failed to load contracts. Please try again.");
+        console.error("Error fetching data:", error);
+        setError("Failed to load data. Please try again.");
       } finally {
         setIsLoading(false);
       }
     };
-    fetchContracts();
-    fetchDepartments();
+
+    fetchData();
   }, []);
 
   const [formData, setFormData] = useState({
@@ -210,6 +209,7 @@ export const AddEmployee: React.FC = () => {
     setErrors({});
     setActiveStep(1);
   };
+
 
   const nextStep = () =>
     setActiveStep((step) => Math.min(step + 1, steps.length));
@@ -468,13 +468,28 @@ export const AddEmployee: React.FC = () => {
                   <select
                     value={formData.role}
                     onChange={(e) => handleInputChange("role", e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.role ? "border-red-500" : "border-gray-300"
+                    }`}
                   >
-                    <option value="employee">Registered Nurse</option>
-                    <option value="manager">Doctor</option>
-                    <option value="admin">Nursing Assistant</option>
-                    <option value="admin">Specialist</option>
+                    <option value="">Select a role</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.roleName}
+                      </option>
+                    ))}
                   </select>
+                  {formData.role && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      {roles.find(r => r.id === formData.role)?.description}
+                    </p>
+                  )}
+                  {errors.role && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {errors.role}
+                    </p>
+                  )}
                 </div>
 
                 <div>
