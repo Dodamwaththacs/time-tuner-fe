@@ -16,6 +16,7 @@ import { departmentAPI } from "../../api/department";
 import { contractAPI } from "../../api/contract";
 import { roleAPI } from "../../api/role";
 import { skillAPI } from "../../api/skill";
+import { employeeAPI } from "../../api/employee";
 import type { Department } from "../../api/department";
 import type { ContractType } from "../../api/contract";
 import type { Role } from "../../api/role";
@@ -106,6 +107,8 @@ export const AddEmployee: React.FC = () => {
     salary: "",
     skills: [] as EmployeeSkill[],
     avatar: null as File | null,
+    organization : "123e4567-e89b-12d3-a456-426655440001",
+
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -171,11 +174,38 @@ export const AddEmployee: React.FC = () => {
     e.preventDefault();
     if (!validateForm()) return;
     setIsSubmitting(true);
-    console.log("Form Data Submitted:", formData);
+    
+    // Create the payload in the required format
+    const payload = {
+      id: crypto.randomUUID(), // Generate a new UUID for the employee
+      employeeCode: `EMP${Date.now()}`, // Generate employee code
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      hireDate: formData.hireDate,
+      active: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      roles: formData.role ? [formData.role] : [],
+      skills: formData.skills.map(employeeSkill => employeeSkill.skill.id),
+      departments: formData.department ? [formData.department] : [],
+      organization: formData.organization
+    };
+    
+    console.log("Payload to be sent:", payload);
+    
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // API call to create employee
+      const response = await employeeAPI.createEmployee(payload);
+      console.log("Employee created successfully:", response);
+      
+      // Reset form on success
+      resetForm();
+      alert("Employee created successfully!");
     } catch (err) {
-      console.error("Error creating user:", err);
+      console.error("Error creating employee:", err);
+      alert("Failed to create employee. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -198,6 +228,7 @@ export const AddEmployee: React.FC = () => {
       contractEnd: "",
       ftePercentage: 0,
       activeContract: false,
+      organization : "123e4567-e89b-12d3-a456-426655440001",
     });
     setErrors({});
     setActiveStep(1);

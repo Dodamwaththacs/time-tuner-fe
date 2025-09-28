@@ -227,4 +227,47 @@ export const employeeAPI = {
       throw error;
     }
   },
+
+  /**
+   * Create a new employee with the specific payload structure
+   */
+  async createEmployee(data: {
+    id: string;
+    employeeCode: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    hireDate: string;
+    active: boolean;
+    createdAt: string;
+    updatedAt: string;
+    roles: string[];
+    skills: string[];
+    departments: string[];
+    organization: string;
+  }): Promise<any> {
+    try {
+      const response = await fetch(`${BASE_URL}/employees`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("Error creating employee:", error);
+      throw error;
+    }
+  },
 };
