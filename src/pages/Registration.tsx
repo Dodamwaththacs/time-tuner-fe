@@ -224,7 +224,8 @@ export const Registration: React.FC = () => {
                 formData.user_email,
                 formData.user_password,
                 formData.user_name,
-                formData.user_role
+                formData.user_role,
+                orgResponse 
             );
 
             if (userSuccess) {

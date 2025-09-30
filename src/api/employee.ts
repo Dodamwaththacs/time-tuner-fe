@@ -1,11 +1,13 @@
 const organizationId = "123e4567-e89b-12d3-a456-426655440001";
 const departmentId = "123e4567-e89b-12d3-a456-426655440001";
+const employeeId = "123e4567-e89b-12d3-a456-426655440002";
 
 // Employee API types and functions
 export interface EmployeeUserAccount {
   username: string;
   email: string;
   userRole: string;
+  avatar: string;
 }
 
 export interface EmployeeRole {
@@ -33,8 +35,8 @@ export interface EmployeeSkill {
 export interface EmployeePreference {
   shiftType: string;
   department: string;
-  preferenceType: "PREFERRED" | "AVAILABLE" | "UNAVAILABLE";
-  preferenceWeight: number;
+  preferenceType: "PREFER" | "AVAILABLE" | "UNAVAILABLE";
+  preferenceWeight: number | null;
 }
 
 export interface Employee {
@@ -66,6 +68,32 @@ export const employeeAPI = {
     try {
       const response = await fetch(
         `${BASE_URL}/employees/${organizationId}/details`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            // Add authorization header if needed
+            // 'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+      throw error;
+    }
+  },
+  
+  async getEmployeeWithDetails(): Promise<Employee> {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/employees/employee/${employeeId}/details`,
         {
           method: "GET",
           headers: {

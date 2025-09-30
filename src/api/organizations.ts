@@ -38,7 +38,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api
 
 export const organizationAPI = {
   
-  async create(data: CreateOrganizationRequest): Promise<CreateOrganizationResponse> {
+  async create(data: CreateOrganizationRequest): Promise<string> {
     try {
       const response = await fetch(`${BASE_URL}/organizations`, {
         method: 'POST',
@@ -87,7 +87,7 @@ export const organizationAPI = {
   /**
    * Update organization
    */
-  async update(id: string, data: Partial<CreateOrganizationRequest>): Promise<CreateOrganizationResponse> {
+  async update(id: string, data: Partial<CreateOrganizationRequest>): Promise<String> {
     try {
       const response = await fetch(`${BASE_URL}/organizations/${id}`, {
         method: 'PUT',

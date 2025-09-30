@@ -18,126 +18,95 @@ import {
   Camera
 } from 'lucide-react';
 
-// TypeScript interfaces for the profile data
-interface UserAccount {
-  username: string;
-  email: string;
-  userRole: string;
-  avatar: string;
-}
 
-interface PrimaryRole {
-  roleName: string;
-  description: string;
-}
+import type { Employee } from '../api/employee';
+import { employeeAPI } from '../api/employee';
 
-interface PrimaryDepartment {
-  departmentName: string;
-  location: string;
-}
-
-interface Contract {
-  contractName: string;
-  ftePercentage: number;
-}
-
-interface Skill {
-  skillName: string;
-  proficiencyLevel: 'CERTIFIED' | 'EXPERIENCED' | 'BEGINNER' | 'ADVANCED';
-  certifiedDate: string;
-  expiryDate: string | null;
-}
-
-interface Preference {
-  shiftType: string;
-  department: string;
-  preferenceType: 'PREFER' | 'DISLIKE' | 'NEUTRAL';
-  preferenceWeight: number | null;
-}
-
-interface UserProfile {
-  id: string;
-  employeeCode: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  hireDate: string;
-  active: boolean;
-  userAccount: UserAccount;
-  primaryRole: PrimaryRole;
-  primaryDepartment: PrimaryDepartment;
-  contract: Contract;
-  skills: Skill[];
-  preferences: Preference[];
-}
 
 // Dummy data from the provided JSON
-const dummyUserProfile: UserProfile = {
-  "id": "123e4567-e89b-12d3-a456-426655440001",
-  "employeeCode": "EMP001",
-  "firstName": "Jessica",
-  "lastName": "Martinez",
-  "email": "j.martinez@stmarys.com",
-  "phone": "+1-555-0201",
-  "hireDate": "2023-03-15",
-  "active": true,
-  "userAccount": {
-    "username": "jessica.martinez",
-    "email": "j.martinez@stmarys.com",
-    "userRole": "EMPLOYEE",
-    "avatar": "https://www.shutterstock.com/image-photo/close-head-shot-portrait-preppy-600nw-1433809418.jpg"
-  },
-  "primaryRole": {
-    "roleName": "Registered Nurse",
-    "description": "Licensed nursing professional"
-  },
-  "primaryDepartment": {
-    "departmentName": "Intensive Care Unit",
-    "location": "Building A - Floor 3"
-  },
-  "contract": {
-    "contractName": "Full-Time RN",
-    "ftePercentage": 1
-  },
-  "skills": [
-    {
-      "skillName": "BLS Certification",
-      "proficiencyLevel": "CERTIFIED",
-      "certifiedDate": "2023-02-01",
-      "expiryDate": "2025-02-01"
-    },
-    {
-      "skillName": "ACLS Certification",
-      "proficiencyLevel": "CERTIFIED",
-      "certifiedDate": "2023-02-15",
-      "expiryDate": "2025-02-15"
-    },
-    {
-      "skillName": "Critical Care",
-      "proficiencyLevel": "EXPERIENCED",
-      "certifiedDate": "2023-03-01",
-      "expiryDate": null
-    }
-  ],
-  "preferences": [
-    {
-      "shiftType": "Night Shift",
-      "department": "Intensive Care Unit",
-      "preferenceType": "PREFER",
-      "preferenceWeight": null
-    },
-    {
-      "shiftType": "Morning Shift",
-      "department": "Intensive Care Unit",
-      "preferenceType": "PREFER",
-      "preferenceWeight": null
-    }
-  ]
-};
+// const dummyUserProfile: Employee = {
+//   "id": "123e4567-e89b-12d3-a456-426655440001",
+//   "employeeCode": "EMP001",
+//   "firstName": "Jessica",
+//   "lastName": "Martinez",
+//   "email": "j.martinez@stmarys.com",
+//   "phone": "+1-555-0201",
+//   "hireDate": "2023-03-15",
+//   "active": true,
+//   "userAccount": {
+//     "username": "jessica.martinez",
+//     "email": "j.martinez@stmarys.com",
+//     "userRole": "EMPLOYEE",
+//     "avatar": "https://www.shutterstock.com/image-photo/close-head-shot-portrait-preppy-600nw-1433809418.jpg"
+//   },
+//   "primaryRole": {
+//     "roleName": "Registered Nur",
+//     "description": "Licensed nursing professional"
+//   },
+//   "primaryDepartment": {
+//     "departmentName": "Intensive Care Unit",
+//     "location": "Building A - Floor 3"
+//   },
+//   "contract": {
+//     "contractName": "Full-Time RN",
+//     "ftePercentage": 1,
+//   },
+//   "skills": [
+//     {
+//       "skillName": "BLS Certification",
+//       "proficiencyLevel": "CERTIFIED",
+//       "certifiedDate": "2023-02-01",
+//       "expiryDate": "2025-02-01"
+//     },
+//     {
+//       "skillName": "ACLS Certification",
+//       "proficiencyLevel": "CERTIFIED",
+//       "certifiedDate": "2023-02-15",
+//       "expiryDate": "2025-02-15"
+//     },
+//     {
+//       "skillName": "Critical Care",
+//       "proficiencyLevel": "EXPERIENCED",
+//       "certifiedDate": "2023-03-01",
+//       "expiryDate": null
+//     }
+//   ],
+//   "preferences": [
+//     {
+//       "shiftType": "Night Shift",
+//       "department": "Intensive Care Unit",
+//       "preferenceType": "PREFER",
+//       "preferenceWeight": null
+//     },
+//     {
+//       "shiftType": "Morning Shift",
+//       "department": "Intensive Care Unit",
+//       "preferenceType": "PREFER",
+//       "preferenceWeight": null
+//     }
+//   ]
+// };
 
 const MyProfile: React.FC = () => {
-  const profile = dummyUserProfile;
+
+  const [profile, setProfile] = React.useState<Employee | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const employee = await employeeAPI.getEmployeeWithDetails();
+        setProfile(employee);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -146,6 +115,29 @@ const MyProfile: React.FC = () => {
       day: 'numeric'
     });
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Null check
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Profile not found</p>
+        </div>
+      </div>
+    );
+  }
 
   const getProficiencyColor = (level: string) => {
     switch (level) {
@@ -191,11 +183,26 @@ const MyProfile: React.FC = () => {
               {/* Profile Info */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <div className="relative group">
-                  <img
-                    src={profile.userAccount.avatar}
-                    alt={`${profile.firstName} ${profile.lastName}`}
-                    className="w-28 h-28 lg:w-32 lg:h-32 rounded-2xl border-4 border-white/20 shadow-2xl object-cover transition-transform group-hover:scale-105"
-                  />
+                  {profile.userAccount.avatar ? (
+                    <img
+                      src={profile.userAccount.avatar}
+                      alt={`${profile.firstName} ${profile.lastName}`}
+                      className="w-28 h-28 lg:w-32 lg:h-32 rounded-2xl border-4 border-white/20 shadow-2xl object-cover transition-transform group-hover:scale-105"
+                      onError={(e) => {
+                        // Fallback to default avatar if image fails to load
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  
+                  {/* Default Avatar Fallback */}
+                  <div className={`w-28 h-28 lg:w-32 lg:h-32 rounded-2xl border-4 border-white/20 shadow-2xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center transition-transform group-hover:scale-105 ${profile.userAccount.avatar ? 'hidden' : ''}`}>
+                    <span className="text-white text-2xl lg:text-3xl font-bold">
+                      {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
+                    </span>
+                  </div>
+                  
                   <button className="absolute -bottom-2 -right-2 p-2 bg-white text-blue-600 rounded-xl shadow-lg hover:shadow-xl transition-all group-hover:scale-105">
                     <Camera size={16} />
                   </button>

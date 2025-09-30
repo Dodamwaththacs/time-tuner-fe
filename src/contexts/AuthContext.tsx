@@ -9,12 +9,13 @@ interface User {
   name: string;
   role: UserRole;
   provider?: 'email' | 'google'; // Track how user signed up
+  organizationId?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, fullName: string, role: UserRole) => Promise<boolean>;
+  signup: (email: string, password: string, fullName: string, role: UserRole, organizationId: string) => Promise<boolean>;
   googleSignIn: () => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
@@ -93,24 +94,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // Mock login - find user in mock database
-      const foundUser = mockUsers.find(u => u.email === email && u.password === password);
-      
-      if (foundUser) {
-        const userWithoutPassword = {
-          id: foundUser.id,
-          email: foundUser.email,
-          name: foundUser.name,
-          role: foundUser.role,
-          provider: foundUser.provider
-        };
-        
-        setUser(userWithoutPassword);
-        localStorage.setItem('authToken', 'mock-jwt-token');
-        localStorage.setItem('userData', JSON.stringify(userWithoutPassword));
-        return true;
+      // API call to login endpoint
+      const response = await fetch('http://localhost:8080/api/users/login', {
+        method: 'POST',
+        headers: {
+          'accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: email,
+          password: password
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('Login failed:', errorData);
+        return false;
       }
-      return false;
+
+      const loginData = await response.json();
+      console.log('Login successful:', loginData);
+
+      // Map API response to user object
+      const userData = {
+        id: loginData.id,
+        email: loginData.email,
+        name: loginData.name,
+        role: loginData.role.toLowerCase() as UserRole, // Convert "EMPLOYEE" to "employee"
+        provider: loginData.provider === 'keycloak' ? 'email' as const : loginData.provider as 'email' | 'google'
+      };
+      
+      setUser(userData);
+      
+      // Store token and user data
+      localStorage.setItem('authToken', loginData.token);
+      localStorage.setItem('userData', JSON.stringify(userData));
+      localStorage.setItem('userId', loginData.userId);
+      localStorage.setItem('organizationId', loginData.organizationId);
+      
+      return true;
     } catch (error) {
       console.error('Login failed:', error);
       return false;
@@ -119,41 +142,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signup = async (email: string, password: string, fullName: string, role: UserRole): Promise<boolean> => {
+  const signup = async (email: string, password: string, fullName: string, role: UserRole, organizationId: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // Check if user already exists
-      const existingUser = mockUsers.find(u => u.email === email);
-      if (existingUser) {
-        return false; // User already exists
+      // API call to create user endpoint
+      const response = await fetch('http://localhost:8080/api/appUsers', {
+        method: 'POST',
+        headers: {
+          'accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          displayName: fullName,
+          userType: role.toUpperCase(), // Convert to uppercase (ADMIN, MANAGER, EMPLOYEE)
+          status: true,
+          organization: organizationId,
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('Signup failed:', errorData);
+        return false;
       }
+      // if signup is successful, navigate to login
 
-      // Create new user
-      const newUser = {
-        id: Date.now().toString(), // Simple ID generation for demo
-        email,
-        name: fullName,
-        role,
-        provider: 'email' as const,
-        password
-      };
-
-      // Add to mock database
-      mockUsers.push(newUser);
-
-      // Set current user (without password)
-      const userWithoutPassword = {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-        role: newUser.role,
-        provider: newUser.provider
-      };
-
-      setUser(userWithoutPassword);
-      localStorage.setItem('authToken', 'mock-jwt-token');
-      localStorage.setItem('userData', JSON.stringify(userWithoutPassword));
       return true;
+
+     
     } catch (error) {
       console.error('Signup failed:', error);
       return false;
