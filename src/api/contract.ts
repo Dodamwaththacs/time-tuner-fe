@@ -1,22 +1,4 @@
-// Helper function to get organization ID
-const getOrganizationId = (): string => {
-  const orgId = localStorage.getItem('organizationId');
-  const userData = localStorage.getItem('userData');
-  
-  if (orgId) return orgId;
-  
-  if (userData) {
-    try {
-      const user = JSON.parse(userData);
-      if (user.organizationId) return user.organizationId;
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-    }
-  }
-  
-  // No organization ID found - user is not properly authenticated
-  throw new Error('Organization ID not found. Please log in again.');
-};
+import { getOrganizationId, getAuthHeaders } from '../utils/authUtils';
 
 // Contract API types and functions
 export interface ContractType {
@@ -53,11 +35,7 @@ export const contractAPI = {
       const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/organization`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add authorization header if needed
-          // 'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -80,9 +58,7 @@ export const contractAPI = {
       const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/${contractId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -109,9 +85,7 @@ export const contractAPI = {
       };
       const response = await fetch(`${BASE_URL}/contractTypes`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
       });
 
@@ -132,11 +106,9 @@ export const contractAPI = {
    */
   async update(contractId: string, data: Partial<CreateContractRequest>): Promise<{ success: boolean; contractType: ContractType }> {
     try {
-      const response = await fetch(`${BASE_URL}/contractTypes/${contractId}`, {
+      const response = await fetch(`${BASE_URL}/contractTypes${contractId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
       });
 
@@ -157,12 +129,9 @@ export const contractAPI = {
    */
   async delete(contractId: string): Promise<{ success: boolean; message?: string }> {
     try {
-      console.log("this is contract id", contractId);
       const response = await fetch(`${BASE_URL}/contractTypes/${contractId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
