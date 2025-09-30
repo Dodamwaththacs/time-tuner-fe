@@ -103,7 +103,7 @@ export const contractAPI = {
         ...data,
         organization: organizationId
       };
-      const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}`, {
+      const response = await fetch(`${BASE_URL}/contractTypes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,8 +128,7 @@ export const contractAPI = {
    */
   async update(contractId: string, data: Partial<CreateContractRequest>): Promise<{ success: boolean; contractType: ContractType }> {
     try {
-      const organizationId = getOrganizationId();
-      const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/${contractId}`, {
+      const response = await fetch(`${BASE_URL}/contractTypes/${contractId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -154,8 +153,8 @@ export const contractAPI = {
    */
   async delete(contractId: string): Promise<{ success: boolean; message?: string }> {
     try {
-      const organizationId = getOrganizationId();
-      const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/${contractId}`, {
+      console.log("this is contract id", contractId);
+      const response = await fetch(`${BASE_URL}/contractTypes/${contractId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -166,6 +165,12 @@ export const contractAPI = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      // For 204 No Content, return success without parsing JSON
+      if (response.status === 204) {
+        return { success: true, message: 'Contract deleted successfully' };
+      }
+
+      // For other success responses, try to parse JSON
       const result = await response.json();
       return result;
     } catch (error) {

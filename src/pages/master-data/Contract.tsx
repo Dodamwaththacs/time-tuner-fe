@@ -11,7 +11,7 @@ import { contractAPI } from '../../api/contract';
 
 
 
-interface ShiftTemplate {
+interface ContractTemplate {
   id: string;
   contractName: string;
   maxHourPerWeek: number;
@@ -25,15 +25,26 @@ interface ShiftTemplate {
 export const Contract: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<ShiftTemplate | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<ContractTemplate | null>(null);
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
-  const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
+  const [ContractTemplates, setContractTemplates] = useState<ContractTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    contractName: '',
+    maxHourPerWeek: 0,
+    maxShiftsPerWeek: 0,
+    maxConsecutiveDays: 0,
+    minRestHours: 0,
+    description: '',
+    active: true
+  });
 
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
         const response = await contractAPI.getAllContractTypes();
-        setShiftTemplates(response);
+        console.log("response from contract api", response);
+        setContractTemplates(response);
       } catch (error) {
         console.error('Error fetching shift templates:', error);
       }
@@ -42,7 +53,87 @@ export const Contract: React.FC = () => {
     fetchTemplates();
   }, []);
 
-  const filteredTemplates = shiftTemplates.filter(template =>
+  // Reset form data when modal opens/closes or editing changes
+  useEffect(() => {
+    if (showModal) {
+      if (editingTemplate) {
+        setFormData({
+          contractName: editingTemplate.contractName,
+          maxHourPerWeek: editingTemplate.maxHourPerWeek,
+          maxShiftsPerWeek: editingTemplate.maxShiftsPerWeek,
+          maxConsecutiveDays: editingTemplate.maxConsecutiveDays,
+          minRestHours: editingTemplate.minRestHours,
+          description: editingTemplate.description,
+          active: editingTemplate.active
+        });
+      } else {
+        setFormData({
+          contractName: '',
+          maxHourPerWeek: 0,
+          maxShiftsPerWeek: 0,
+          maxConsecutiveDays: 0,
+          minRestHours: 0,
+          description: '',
+          active: true
+        });
+      }
+    }
+  }, [showModal, editingTemplate]);
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (editingTemplate) {
+        // Update existing contract
+        await contractAPI.update(editingTemplate.id, formData);
+        console.log('Contract updated successfully');
+      } else {
+        // Create new contract
+        await contractAPI.create(formData);
+        console.log('Contract created successfully');
+      }
+
+      // Refresh the list
+      const response = await contractAPI.getAllContractTypes();
+      setContractTemplates(response);
+
+      // Close modal and reset form
+      setShowModal(false);
+      setEditingTemplate(null);
+      alert(editingTemplate ? 'Contract updated successfully!' : 'Contract created successfully!');
+    } catch (error) {
+      console.error('Error saving contract:', error);
+      alert('Failed to save contract. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this contract?')) return;
+
+    try {
+      await contractAPI.delete(id);
+      // Refresh the list after successful deletion
+      const response = await contractAPI.getAllContractTypes();
+      setContractTemplates(response);
+      alert('Contract deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting contract:', error);
+      alert('Failed to delete contract. Please try again.');
+    }
+  };
+
+  const filteredTemplates = ContractTemplates.filter(template =>
     template.contractName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     template.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -146,7 +237,10 @@ export const Contract: React.FC = () => {
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="p-1 text-red-600 hover:text-red-900 hover:bg-red-100 rounded transition-colors">
+                      <button 
+                        onClick={() => handleDelete(template.id)}
+                        className="p-1 text-red-600 hover:text-red-900 hover:bg-red-100 rounded transition-colors"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -162,47 +256,63 @@ export const Contract: React.FC = () => {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
             <h3 className="text-lg font-semibold mb-4">{editingTemplate ? 'Edit Contract' : 'New Contract'}</h3>
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <input 
                 type="text" 
                 placeholder="Contract Name" 
-                defaultValue={editingTemplate?.contractName} 
+                value={formData.contractName}
+                onChange={(e) => handleInputChange('contractName', e.target.value)}
+                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <input 
                 type="number" 
                 placeholder="Max Hours/Week" 
-                defaultValue={editingTemplate?.maxHourPerWeek} 
+                value={formData.maxHourPerWeek}
+                onChange={(e) => handleInputChange('maxHourPerWeek', parseInt(e.target.value) || 0)}
+                required
+                min="1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <input 
                 type="number" 
                 placeholder="Max Shifts/Week" 
-                defaultValue={editingTemplate?.maxShiftsPerWeek} 
+                value={formData.maxShiftsPerWeek}
+                onChange={(e) => handleInputChange('maxShiftsPerWeek', parseInt(e.target.value) || 0)}
+                required
+                min="1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <input 
                 type="number" 
                 placeholder="Max Consecutive Days" 
-                defaultValue={editingTemplate?.maxConsecutiveDays} 
+                value={formData.maxConsecutiveDays}
+                onChange={(e) => handleInputChange('maxConsecutiveDays', parseInt(e.target.value) || 0)}
+                required
+                min="1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <input 
                 type="number" 
                 placeholder="Min Rest Hours" 
-                defaultValue={editingTemplate?.minRestHours} 
+                value={formData.minRestHours}
+                onChange={(e) => handleInputChange('minRestHours', parseInt(e.target.value) || 0)}
+                required
+                min="1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
               />
               <textarea 
                 placeholder="Description" 
-                defaultValue={editingTemplate?.description} 
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 rows={3}
               />
               <label className="flex items-center space-x-2">
                 <input 
                   type="checkbox" 
-                  defaultChecked={editingTemplate?.active ?? true} 
+                  checked={formData.active}
+                  onChange={(e) => handleInputChange('active', e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700">Active</span>
@@ -211,15 +321,27 @@ export const Contract: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={() => { setShowModal(false); setEditingTemplate(null); }} 
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={isLoading}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center"
                 >
-                  {editingTemplate ? 'Update' : 'Create'}
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {editingTemplate ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    editingTemplate ? 'Update' : 'Create'
+                  )}
                 </button>
               </div>
             </form>
