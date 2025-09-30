@@ -1,4 +1,5 @@
 
+import { getOrganizationId, getAuthHeaders } from '../utils/authUtils';
 
 
 export interface ShiftType {
@@ -9,10 +10,10 @@ export interface ShiftType {
   durationHours: number;
   description: string;
   active: boolean;
+  organization: string;
 }
 
 const API_BASE_URL = 'http://localhost:8080/api';
-const organizationId = "123e4567-e89b-12d3-a456-426655440001";
 
 
 export const shiftAPI = {
@@ -28,7 +29,11 @@ export const shiftAPI = {
     } ,
 
     getAllByOrganization: async (): Promise<ShiftType[]> => {
-        const response = await fetch(`${API_BASE_URL}/shiftTypes/${organizationId}/organization`);
+        const organizationId = getOrganizationId();
+        const response = await fetch(`${API_BASE_URL}/shiftTypes/${organizationId}/organization`, {
+            method: 'GET',
+            headers: getAuthHeaders(),
+        });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return response.json();
     },

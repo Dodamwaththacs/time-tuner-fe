@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Clock, 
   Plus, 
@@ -12,68 +12,47 @@ import {
   Upload
 } from 'lucide-react';
 
-interface ShiftTemplate {
-  id: number;
-  shift_name: string;
-  start_time: string;
-  end_time: string;
-  duration_hours: number;
-  description: string;
-  active: boolean;  
-}
+import type { ShiftType } from '../../api/shiftType';
+import { shiftAPI } from '../../api/shiftType';
 
 export const ShiftTemplates: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddTemplate, setShowAddTemplate] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<ShiftTemplate | null>(null);
-  const [selectedTemplates, setSelectedTemplates] = useState<number[]>([]);
+  const [editingTemplate, setEditingTemplate] = useState<ShiftType | null>(null);
+  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
+  const [shiftTemplates, setShiftTemplates] = useState<ShiftType[]>([]);
 
-  const shiftTemplates: ShiftTemplate[] = [
-    {
-      id: 1,
-      shift_name: 'Day Shift',
-      start_time: '08:00',
-      end_time: '16:00',
-      duration_hours: 8,
-      description: 'Standard day shift for office staff',
-      active: true,
-    },
-    {
-      id: 2,
-      shift_name: 'Night Shift',
-      start_time: '22:00',
-      end_time: '06:00',
-      duration_hours: 8,
-      description: 'Night shift for security and maintenance',
-      active: true,
-    },
-    {
-      id: 3,
-      shift_name: 'Part Time',
-      start_time: '09:00',
-      end_time: '13:00',
-      duration_hours: 4,
-      description: 'Part-time shift for students',
-      active: false,
-    }
-  ];
+  useEffect(() => {
+    const fetchShiftTemplates = async () => {
+      try {
+        const templates = await shiftAPI.getAllByOrganization();
+        setShiftTemplates(templates);
+      } catch (error) {
+        console.error('Error fetching shift templates:', error);
+      }
+    };
+    fetchShiftTemplates();
+  }, []);
+
+
 
   const filteredTemplates = shiftTemplates.filter(template => {
-    const matchesSearch = template.shift_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = template.shiftName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          template.description.toLowerCase().includes(searchQuery.toLowerCase());
     
     return matchesSearch;
   });
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
+  const formatTime = (time: number) => {
+    const hours = Math.floor(time / 100);
+    const minutes = time % 100;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHour = hours % 12 || 12;
+    const displayMinutes = minutes.toString().padStart(2, '0');
+    return `${displayHour}:${displayMinutes} ${ampm}`;
   };
 
-  const toggleTemplateSelection = (templateId: number) => {
+  const toggleTemplateSelection = (templateId: string) => {
     setSelectedTemplates(prev => 
       prev.includes(templateId) 
         ? prev.filter(id => id !== templateId)
@@ -83,7 +62,7 @@ export const ShiftTemplates: React.FC = () => {
 
   const getTotalTemplates = () => shiftTemplates.length;
   const getActiveTemplates = () => shiftTemplates.filter(t => t.active).length;
-  const getTotalHours = () => shiftTemplates.reduce((sum, t) => sum + t.duration_hours, 0);
+  const getTotalHours = () => shiftTemplates.reduce((sum, t) => sum + t.durationHours, 0);
 
   return (
     <div className="p-6 space-y-6">
@@ -221,17 +200,17 @@ export const ShiftTemplates: React.FC = () => {
                     <div className="flex items-center">
                       <Clock className="w-5 h-5 text-blue-600 mr-3" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{template.shift_name}</div>
+                        <div className="text-sm font-medium text-gray-900">{template.shiftName}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {formatTime(template.start_time)} - {formatTime(template.end_time)}
+                      {formatTime(template.startTime)} - {formatTime(template.endTime)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{template.duration_hours} hours</div>
+                    <div className="text-sm text-gray-900">{template.durationHours} hours</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500 max-w-xs truncate">{template.description}</div>
@@ -281,7 +260,7 @@ export const ShiftTemplates: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Shift Name</label>
                   <input
                     type="text"
-                    defaultValue={editingTemplate?.shift_name}
+                    defaultValue={editingTemplate?.shiftName}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter shift name"
                   />
@@ -299,17 +278,23 @@ export const ShiftTemplates: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
                     <input
-                      type="time"
-                      defaultValue={editingTemplate?.start_time}
+                      type="number"
+                      defaultValue={editingTemplate?.startTime}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., 800 for 8:00 AM"
+                      min="0"
+                      max="2359"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
                     <input
-                      type="time"
-                      defaultValue={editingTemplate?.end_time}
+                      type="number"
+                      defaultValue={editingTemplate?.endTime}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., 1700 for 5:00 PM"
+                      min="0"
+                      max="2359"
                     />
                   </div>
                 </div>
@@ -317,7 +302,7 @@ export const ShiftTemplates: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Duration (Hours)</label>
                   <input
                     type="number"
-                    defaultValue={editingTemplate?.duration_hours}
+                    defaultValue={editingTemplate?.durationHours}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Duration in hours"
                     min="1"
