@@ -1,4 +1,18 @@
-const organizationId = "123e4567-e89b-12d3-a456-426655440001";
+// Helper function to get organization ID
+const getOrganizationId = (): string => {
+  const orgId = localStorage.getItem('organizationId');
+  const userData = localStorage.getItem('userData');
+  
+  if (orgId) return orgId;
+  
+  if (userData) {
+    const user = JSON.parse(userData);
+    return user.organizationId;
+  }
+  
+  // Fallback to hardcoded value if not found
+  return "123e4567-e89b-12d3-a456-426655440001";
+};
 
 // Contract API types and functions
 export interface ContractType {
@@ -20,6 +34,7 @@ export interface CreateContractRequest {
   minRestHours: number;
   description: string;
   active: boolean;
+  organization: string; 
 }
 
 // API functions
@@ -31,6 +46,7 @@ export const contractAPI = {
    */
   async getAllContractTypes(): Promise<ContractType[]> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/organization`, {
         method: 'GET',
         headers: {
@@ -57,6 +73,7 @@ export const contractAPI = {
    */
   async getById(contractId: string): Promise<ContractType> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/${contractId}`, {
         method: 'GET',
         headers: {
@@ -79,14 +96,19 @@ export const contractAPI = {
   /**
    * Create a new contract type
    */
-  async create(data: CreateContractRequest): Promise<{ success: boolean; contractType: ContractType }> {
+  async create(data: Omit<CreateContractRequest, 'organization'>): Promise<{ success: boolean; contractType: ContractType }> {
     try {
+      const organizationId = getOrganizationId();
+      const payload = {
+        ...data,
+        organization: organizationId
+      };
       const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -106,6 +128,7 @@ export const contractAPI = {
    */
   async update(contractId: string, data: Partial<CreateContractRequest>): Promise<{ success: boolean; contractType: ContractType }> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/${contractId}`, {
         method: 'PUT',
         headers: {
@@ -131,6 +154,7 @@ export const contractAPI = {
    */
   async delete(contractId: string): Promise<{ success: boolean; message?: string }> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/contractTypes/${organizationId}/${contractId}`, {
         method: 'DELETE',
         headers: {
