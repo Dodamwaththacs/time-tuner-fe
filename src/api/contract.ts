@@ -6,12 +6,16 @@ const getOrganizationId = (): string => {
   if (orgId) return orgId;
   
   if (userData) {
-    const user = JSON.parse(userData);
-    return user.organizationId;
+    try {
+      const user = JSON.parse(userData);
+      if (user.organizationId) return user.organizationId;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+    }
   }
   
-  // Fallback to hardcoded value if not found
-  return "123e4567-e89b-12d3-a456-426655440001";
+  // No organization ID found - user is not properly authenticated
+  throw new Error('Organization ID not found. Please log in again.');
 };
 
 // Contract API types and functions
