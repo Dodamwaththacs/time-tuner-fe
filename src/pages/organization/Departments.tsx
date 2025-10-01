@@ -3,6 +3,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Plus, Edit, Trash2, Search, Filter, X } from "lucide-react";
 import { departmentAPI } from "../../api/department";
 import type { Department } from "../../api/department";
+import { getOrganizationId, getAuthHeaders } from '../../utils/authUtils';
+
 
 
 export const Departments: React.FC = () => {
@@ -15,8 +17,9 @@ export const Departments: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [organizationId, setOrganizationId] = useState("");
 
-  const organizationId = "123e4567-e89b-12d3-a456-426655440001";
+  // const organizationId = "123e4567-e89b-12d3-a456-426655440001";
 
   // Fetch departments on component mount
   useEffect(() => {
@@ -24,6 +27,7 @@ export const Departments: React.FC = () => {
       try {
         setLoading(true);
         const response = await departmentAPI.getAllByOrganization();
+        setOrganizationId(getOrganizationId() || "");
         setDepartments(response);
       } catch (error) {
         console.error("Error fetching departments:", error);
@@ -38,14 +42,14 @@ export const Departments: React.FC = () => {
 
   // Filter departments based on search and status
   const filteredDepartments = departments.filter((dept) => {
-    const matchesSearch = dept.departmentName
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "Active" ? dept.active : !dept.active);
-    return matchesSearch && matchesStatus;
-  });
+  const matchesSearch = dept.departmentName
+    ?.toLowerCase()
+    .includes(searchQuery.toLowerCase()) ?? true;
+  const matchesStatus =
+    statusFilter === "all" ||
+    (statusFilter === "Active" ? dept.active : !dept.active);
+  return matchesSearch && matchesStatus;
+});
 
   // Form state
   const [formData, setFormData] = useState({
@@ -93,7 +97,7 @@ export const Departments: React.FC = () => {
 
     try {
       if (editingDepartment) {
-        const updatedDept = await departmentAPI.update(editingDepartment.id, {
+        const updatedDept:any = await departmentAPI.update(editingDepartment.id, {
           ...data,
           id: editingDepartment.id,
         });
@@ -117,8 +121,8 @@ export const Departments: React.FC = () => {
   const handleDelete = async (dept: Department) => {
     if (window.confirm(`Are you sure you want to delete "${dept.departmentName}"?`)) {
       try {
-        // In real app, call departmentAPI.delete(dept.id)
         setDepartments(deps => deps.filter(d => d.id !== dept.id));
+        await departmentAPI.delete(dept.id);
         alert("Department deleted successfully!");
       } catch (error) {
         console.error("Error deleting department:", error);

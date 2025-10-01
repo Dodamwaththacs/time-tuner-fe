@@ -11,7 +11,7 @@ import {
   Loader,
   AlertCircle
 } from 'lucide-react';
-import { Layout } from '../../components/Layout';
+
 import { skillAPI, type Skill } from '../../api/skill';
 
 export const SkillsManagement: React.FC = () => {
@@ -35,6 +35,7 @@ export const SkillsManagement: React.FC = () => {
         setLoading(true);
         setError(null);
         const data = await skillAPI.getAllSkills();
+        console.log('Fetched skills:', data);
         setSkills(data);
       } catch (err) {
         console.error('Failed to fetch skills:', err);
@@ -64,8 +65,9 @@ export const SkillsManagement: React.FC = () => {
     const skillData = {
       skillName: formData.get('skillName') as string,
       description: formData.get('description') as string,
-      skillLevel: formData.get('skillLevel') as string,
+      skillLevel: (formData.get('skillLevel') as string).toUpperCase(),
       active: formData.get('active') === 'Active',
+      organization: "" 
     };
 
     try {

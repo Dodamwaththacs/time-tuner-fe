@@ -1,4 +1,4 @@
-const organizationId = "123e4567-e89b-12d3-a456-426655440001";
+import { getOrganizationId, getAuthHeaders } from '../utils/authUtils';
 
 // Skill API types and functions
 export interface Skill {
@@ -14,24 +14,20 @@ export interface CreateSkillRequest {
   description: string;
   skillLevel: string;
   active: boolean;
+  organization: string;
 }
 
 // API functions
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 export const skillAPI = {
-  /**
-   * Get all skills for an organization
-   */
+
   async getAllSkills(): Promise<Skill[]> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/skills/${organizationId}/organization`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add authorization header if needed
-          // 'Authorization': `Bearer ${token}`,
-        },
+        headers:getAuthHeaders()  ,
       });
 
       if (!response.ok) {
@@ -51,11 +47,10 @@ export const skillAPI = {
    */
   async getById(skillId: string): Promise<Skill> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/skills/${organizationId}/${skillId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -75,11 +70,14 @@ export const skillAPI = {
    */
   async create(data: CreateSkillRequest): Promise<{ success: boolean; skill: Skill }> {
     try {
-      const response = await fetch(`${BASE_URL}/skills/${organizationId}`, {
+      const organizationId = getOrganizationId();
+      
+      // Add organization to data
+      data.organization = organizationId;
+
+      const response = await fetch(`${BASE_URL}/skills`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
       });
 
@@ -100,11 +98,10 @@ export const skillAPI = {
    */
   async update(skillId: string, data: Partial<CreateSkillRequest>): Promise<{ success: boolean; skill: Skill }> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/skills/${organizationId}/${skillId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
       });
 
@@ -125,12 +122,15 @@ export const skillAPI = {
    */
   async delete(skillId: string): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${BASE_URL}/skills/${organizationId}/${skillId}`, {
+      const response = await fetch(`${BASE_URL}/skills/${skillId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       });
+
+      // Handle 204 No Content response (successful deletion)
+      if (response.status === 204) {
+        return { success: true, message: 'Skill deleted successfully' };
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -5,8 +5,8 @@ import { getOrganizationId, getAuthHeaders } from '../utils/authUtils';
 export interface ShiftType {
   id: string;
   shiftName: string;
-  startTime: number;
-  endTime: number;
+  startTime: string;
+  endTime: string;
   durationHours: number;
   description: string;
   active: boolean;
@@ -17,11 +17,16 @@ const API_BASE_URL = 'http://localhost:8080/api';
 
 
 export const shiftAPI = {
-    create : async (shiftData: Omit<ShiftType, 'id'>): Promise<ShiftType> => {
+    create : async (shiftData: Omit<ShiftType, 'id' | 'organization'>): Promise<ShiftType> => {
+        const organizationId = getOrganizationId();
+        const payload = {
+            ...shiftData,
+            organization: organizationId
+        };
         const response = await fetch(`${API_BASE_URL}/shiftTypes`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(shiftData)
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -38,10 +43,11 @@ export const shiftAPI = {
         return response.json();
     },
 
-    update : async (id :string, shiftData: ShiftType): Promise<ShiftType> => {
-        const response = await fetch(`${API_BASE_URL}/shiftTypes/${id}`, {
+    update : async (id :string, shiftData: Omit<ShiftType, 'organization'>): Promise<ShiftType> => {
+        const organizationId = getOrganizationId();
+        const response = await fetch(`${API_BASE_URL}/shiftTypes/${organizationId}/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(shiftData)
         });
 
@@ -51,8 +57,14 @@ export const shiftAPI = {
 
     delete : async (id: string): Promise<void> => {
         const response = await fetch(`${API_BASE_URL}/shiftTypes/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         });
+
+        // Handle 204 No Content response (successful deletion)
+        if (response.status === 204) {
+            return;
+        }
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     },

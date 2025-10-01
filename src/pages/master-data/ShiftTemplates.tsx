@@ -21,6 +21,15 @@ export const ShiftTemplates: React.FC = () => {
   const [editingTemplate, setEditingTemplate] = useState<ShiftType | null>(null);
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
   const [shiftTemplates, setShiftTemplates] = useState<ShiftType[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    shiftName: '',
+    startTime: '',
+    endTime: '',
+    durationHours: 0,
+    description: '',
+    active: true
+  });
 
   useEffect(() => {
     const fetchShiftTemplates = async () => {
@@ -34,7 +43,85 @@ export const ShiftTemplates: React.FC = () => {
     fetchShiftTemplates();
   }, []);
 
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (showAddTemplate) {
+      if (editingTemplate) {
+        setFormData({
+          shiftName: editingTemplate.shiftName,
+          startTime: typeof editingTemplate.startTime === 'string' ? editingTemplate.startTime : '',
+          endTime: typeof editingTemplate.endTime === 'string' ? editingTemplate.endTime : '',
+          durationHours: editingTemplate.durationHours,
+          description: editingTemplate.description,
+          active: editingTemplate.active
+        });
+      } else {
+        setFormData({
+          shiftName: '',
+          startTime: '',
+          endTime: '',
+          durationHours: 0,
+          description: '',
+          active: true
+        });
+      }
+    }
+  }, [showAddTemplate, editingTemplate]);
 
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (editingTemplate) {
+        // Update existing template
+        await shiftAPI.update(editingTemplate.id, {
+          ...formData,
+          id: editingTemplate.id
+        });
+        console.log('Shift template updated successfully');
+      } else {
+        // Create new template
+        await shiftAPI.create(formData);
+        console.log('Shift template created successfully');
+      }
+
+      // Refresh the list
+      const templates = await shiftAPI.getAllByOrganization();
+      setShiftTemplates(templates);
+
+      // Close modal and reset form
+      setShowAddTemplate(false);
+      setEditingTemplate(null);
+      alert(editingTemplate ? 'Template updated successfully!' : 'Template created successfully!');
+    } catch (error) {
+      console.error('Error saving template:', error);
+      alert('Failed to save template. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this shift template?')) return;
+
+    try {
+      await shiftAPI.delete(id);
+      const templates = await shiftAPI.getAllByOrganization();
+      setShiftTemplates(templates);
+      alert('Template deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      alert('Failed to delete template. Please try again.');
+    }
+  };
 
   const filteredTemplates = shiftTemplates.filter(template => {
     const matchesSearch = template.shiftName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -43,13 +130,30 @@ export const ShiftTemplates: React.FC = () => {
     return matchesSearch;
   });
 
-  const formatTime = (time: number) => {
-    const hours = Math.floor(time / 100);
-    const minutes = time % 100;
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const displayHour = hours % 12 || 12;
-    const displayMinutes = minutes.toString().padStart(2, '0');
-    return `${displayHour}:${displayMinutes} ${ampm}`;
+  const formatTime = (timeString: string | number) => {
+    if (!timeString) return 'Not set';
+    
+    // Handle legacy numeric format
+    if (typeof timeString === 'number') {
+      const hours = Math.floor(timeString / 100);
+      const minutes = timeString % 100;
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHour = hours % 12 || 12;
+      const displayMinutes = minutes.toString().padStart(2, '0');
+      return `${displayHour}:${displayMinutes} ${ampm}`;
+    }
+    
+    // Handle ISO datetime string
+    try {
+      const date = new Date(timeString);
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      return 'Invalid time';
+    }
   };
 
   const toggleTemplateSelection = (templateId: string) => {
@@ -232,7 +336,10 @@ export const ShiftTemplates: React.FC = () => {
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900 p-1 rounded">
+                      <button 
+                        onClick={() => handleDelete(template.id)}
+                        className="text-red-600 hover:text-red-900 p-1 rounded"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                       <button className="text-gray-600 hover:text-gray-900 p-1 rounded">
@@ -255,20 +362,23 @@ export const ShiftTemplates: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 {editingTemplate ? 'Edit Template' : 'Add New Template'}
               </h3>
-              <form className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Shift Name</label>
                   <input
                     type="text"
-                    defaultValue={editingTemplate?.shiftName}
+                    value={formData.shiftName}
+                    onChange={(e) => handleInputChange('shiftName', e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter shift name"
+                    required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                   <textarea
-                    defaultValue={editingTemplate?.description}
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     rows={3}
                     placeholder="Enter template description"
@@ -278,23 +388,35 @@ export const ShiftTemplates: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
                     <input
-                      type="number"
-                      defaultValue={editingTemplate?.startTime}
+                      type="datetime-local"
+                      value={formData.startTime ? new Date(formData.startTime).toISOString().slice(0, 16) : ''}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const isoString = new Date(e.target.value).toISOString();
+                          handleInputChange('startTime', isoString);
+                        } else {
+                          handleInputChange('startTime', '');
+                        }
+                      }}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., 800 for 8:00 AM"
-                      min="0"
-                      max="2359"
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
                     <input
-                      type="number"
-                      defaultValue={editingTemplate?.endTime}
+                      type="datetime-local"
+                      value={formData.endTime ? new Date(formData.endTime).toISOString().slice(0, 16) : ''}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const isoString = new Date(e.target.value).toISOString();
+                          handleInputChange('endTime', isoString);
+                        } else {
+                          handleInputChange('endTime', '');
+                        }
+                      }}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., 1700 for 5:00 PM"
-                      min="0"
-                      max="2359"
+                      required
                     />
                   </div>
                 </div>
@@ -302,18 +424,21 @@ export const ShiftTemplates: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Duration (Hours)</label>
                   <input
                     type="number"
-                    defaultValue={editingTemplate?.durationHours}
+                    value={formData.durationHours}
+                    onChange={(e) => handleInputChange('durationHours', parseInt(e.target.value) || 0)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Duration in hours"
                     min="1"
                     max="24"
+                    required
                   />
                 </div>
                 <div>
                   <label className="flex items-center space-x-2">
                     <input
                       type="checkbox"
-                      defaultChecked={editingTemplate?.active ?? true}
+                      checked={formData.active}
+                      onChange={(e) => handleInputChange('active', e.target.checked)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm font-medium text-gray-700">Active</span>
@@ -326,15 +451,27 @@ export const ShiftTemplates: React.FC = () => {
                       setShowAddTemplate(false);
                       setEditingTemplate(null);
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    disabled={isLoading}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
                   >
-                    {editingTemplate ? 'Update' : 'Create'} Template
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {editingTemplate ? 'Updating...' : 'Creating...'}
+                      </>
+                    ) : (
+                      `${editingTemplate ? 'Update' : 'Create'} Template`
+                    )}
                   </button>
                 </div>
               </form>

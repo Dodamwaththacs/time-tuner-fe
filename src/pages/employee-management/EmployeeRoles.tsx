@@ -48,6 +48,7 @@ export const EmployeeRoles: React.FC = () => {
       roleName: formData.get('roleName') as string,
       description: formData.get('description') as string,
       active: formData.get('active') === 'on',
+      organization: '' 
     };
 
     try {

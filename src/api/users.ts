@@ -1,6 +1,8 @@
 // Users API types and functions
 
 import type { UserRole } from "../contexts/AuthContext";
+import { getOrganizationId, getAuthHeaders } from '../utils/authUtils';
+
 
 export interface AppUser {
   id: number;
@@ -24,7 +26,6 @@ export interface CreateUserRequest {
 }
 
 
-const organizationId = "123e4567-e89b-12d3-a456-426655440001";
 
 
 // API functions
@@ -36,6 +37,7 @@ export const usersAPI = {
    */
   async getAll(): Promise<AppUser[]> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/appUsers/organization/${organizationId}`, {
         method: 'GET',
         headers: {
@@ -60,6 +62,7 @@ export const usersAPI = {
    */
   async create(userData: CreateUserRequest): Promise<any> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/appUsers`, {
         method: 'POST',
         headers: {

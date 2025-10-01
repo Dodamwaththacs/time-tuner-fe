@@ -1,6 +1,8 @@
-const organizationId = "123e4567-e89b-12d3-a456-426655440001";
-const departmentId = "123e4567-e89b-12d3-a456-426655440001";
-const employeeId = "123e4567-e89b-12d3-a456-426655440002";
+// const organizationId = "123e4567-e89b-12d3-a456-426655440001";
+// const departmentId = "123e4567-e89b-12d3-a456-426655440001";
+// const employeeId = "123e4567-e89b-12d3-a456-426655440002";
+
+import { getOrganizationId, getEmployeeId,getDepartmentId,getAuthHeaders } from '../utils/authUtils';
 
 // Employee API types and functions
 export interface EmployeeUserAccount {
@@ -66,6 +68,7 @@ export const employeeAPI = {
    */
   async getAllEmployeesWithDetails(): Promise<Employee[]> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(
         `${BASE_URL}/employees/${organizationId}/details`,
         {
@@ -92,6 +95,7 @@ export const employeeAPI = {
   
   async getEmployeeWithDetails(): Promise<Employee> {
     try {
+      const employeeId = getEmployeeId();
       const response = await fetch(
         `${BASE_URL}/employees/employee/${employeeId}/details`,
         {
@@ -118,6 +122,8 @@ export const employeeAPI = {
 
   async getAllEmployeesWithDeparment(): Promise<Employee[]> {
     try {
+      const organizationId = getOrganizationId();
+      const departmentId = getDepartmentId();
       const response = await fetch(
         `${BASE_URL}/employees/organization/${organizationId}/department/${departmentId}`,
         {
@@ -147,6 +153,7 @@ export const employeeAPI = {
    */
   async getById(employeeId: string): Promise<Employee> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(
         `${BASE_URL}/employees/${organizationId}/${employeeId}`,
         {
@@ -176,6 +183,7 @@ export const employeeAPI = {
     data: Omit<Employee, "id">
   ): Promise<{ success: boolean; employee: Employee }> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/employees/${organizationId}`, {
         method: "POST",
         headers: {
@@ -204,6 +212,7 @@ export const employeeAPI = {
     data: Partial<Employee>
   ): Promise<{ success: boolean; employee: Employee }> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(
         `${BASE_URL}/employees/${organizationId}/${employeeId}`,
         {
@@ -234,6 +243,7 @@ export const employeeAPI = {
     employeeId: string
   ): Promise<{ success: boolean; message?: string }> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(
         `${BASE_URL}/employees/${organizationId}/${employeeId}`,
         {

@@ -17,7 +17,7 @@ import  MyProfile  from './pages/MyProfile';
 import { Layout } from './components/Layout';
 import { RoleBasedUI } from './components/RoleBasedUI';
 import { UIStrategyGuide } from './components/UIStrategyGuide';
-import { UserList, RolesPermissions, AddUser } from './pages/users/index';
+import { UserList, RolesPermissions, AddUser } from './pages/users-management/index';
 import { Departments, Locations, BusinessRules } from './pages/organization/index';
 import { SkillsManagement, ShiftTemplates, HolidayCalendar, Contract } from './pages/master-data/index';
 import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine,EnhancedScheduleBuilder} from './pages/schedules/index';

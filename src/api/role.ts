@@ -1,4 +1,7 @@
-const organizationId = "123e4567-e89b-12d3-a456-426655440001";
+// const organizationId = "123e4567-e89b-12d3-a456-426655440001";
+
+
+import { getOrganizationId, getEmployeeId,getDepartmentId,getAuthHeaders } from '../utils/authUtils';
 
 // Role API types and functions
 export interface Role {
@@ -12,6 +15,7 @@ export interface CreateRoleRequest {
   roleName: string;
   description: string;
   active: boolean;
+  organization: string;
 }
 
 // API functions
@@ -23,6 +27,7 @@ export const roleAPI = {
    */
   async getAllRoles(): Promise<Role[]> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/roles/${organizationId}/organization`, {
         method: 'GET',
         headers: {
@@ -49,6 +54,7 @@ export const roleAPI = {
    */
   async getById(roleId: string): Promise<Role> {
     try {
+      const organizationId = getOrganizationId(); 
       const response = await fetch(`${BASE_URL}/roles/${organizationId}/${roleId}`, {
         method: 'GET',
         headers: {
@@ -73,7 +79,12 @@ export const roleAPI = {
    */
   async create(data: CreateRoleRequest): Promise<{ success: boolean; role: Role }> {
     try {
-      const response = await fetch(`${BASE_URL}/roles/${organizationId}`, {
+      const organizationId = getOrganizationId();
+
+      // Add organization to data
+      data.organization = organizationId;
+      
+      const response = await fetch(`${BASE_URL}/roles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,6 +109,7 @@ export const roleAPI = {
    */
   async update(roleId: string, data: Partial<CreateRoleRequest>): Promise<{ success: boolean; role: Role }> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/roles/${organizationId}/${roleId}`, {
         method: 'PUT',
         headers: {
@@ -123,6 +135,7 @@ export const roleAPI = {
    */
   async delete(roleId: string): Promise<{ success: boolean; message?: string }> {
     try {
+      const organizationId = getOrganizationId();
       const response = await fetch(`${BASE_URL}/roles/${organizationId}/${roleId}`, {
         method: 'DELETE',
         headers: {
