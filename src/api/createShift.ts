@@ -1,5 +1,7 @@
-// Remove the incorrect import - it creates circular dependency
 import type { Shift } from "./../../src/pages/schedules/ScheduleBuilder";
+
+import { getOrganizationId, getEmployeeId,getDepartmentId,getAuthHeaders } from '../utils/authUtils';
+
 
 export interface ShiftSkillRequirement {
   id: number;
@@ -42,7 +44,6 @@ const generateUniqueId = (): string => {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9);
 };
 
-const organizationId = "123e4567-e89b-12d3-a456-426655440001";
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
@@ -51,6 +52,7 @@ const createShiftRequest = (shift: Shift): CreateShiftResponse | null => {
   if (shift.status === "published") {
     return null;
   }
+  const organizationId = getOrganizationId();
 
   const shiftDateTime = new Date(shift.shiftDate).toISOString();
 
@@ -126,6 +128,7 @@ export const createShiftAPI = {
   
 
   async getShifts(): Promise<Shift[]> {
+    const organizationId = getOrganizationId();
     const response = await fetch(
       `${BASE_URL}/shifts/${organizationId}/created`
     );

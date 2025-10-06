@@ -23,6 +23,7 @@ export interface CreateUserRequest {
   phone?: string;
   avatar?: string;
   status: boolean;
+  department?: string;
 }
 
 

@@ -262,8 +262,8 @@ export const Contract: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${template.active
-                          ? "bg-green-100 text-green-800 border-green-200"
-                          : "bg-red-100 text-red-800 border-red-200"
+                        ? "bg-green-100 text-green-800 border-green-200"
+                        : "bg-red-100 text-red-800 border-red-200"
                         }`}
                     >
                       {template.active ? "Active" : "Inactive"}
@@ -315,8 +315,7 @@ export const Contract: React.FC = () => {
             </div>
 
             {/* Body */}
-            <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
-              {/* Contract Name */}
+            <form onSubmit={handleSubmit} id="contract-form" className="px-6 py-4 space-y-4">              {/* Contract Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Contract Name

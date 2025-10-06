@@ -663,7 +663,7 @@ export const AddEmployee: React.FC = () => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     FTE Percentage
                   </label>
@@ -679,7 +679,7 @@ export const AddEmployee: React.FC = () => {
                   <p className="text-sm text-gray-500 mt-1">
                     Please enter a value between 0 and 100.
                   </p>
-                </div>
+                </div> */}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

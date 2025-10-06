@@ -20,7 +20,7 @@ import { UIStrategyGuide } from './components/UIStrategyGuide';
 import { UserList, RolesPermissions, AddUser } from './pages/users-management/index';
 import { Departments, Locations, BusinessRules } from './pages/organization/index';
 import { SkillsManagement, ShiftTemplates, HolidayCalendar, Contract } from './pages/master-data/index';
-import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine,EnhancedScheduleBuilder} from './pages/schedules/index';
+import { CurrentSchedules, ScheduleBuilder ,OptimizationEngine} from './pages/schedules/index';
 import { EmployeeRoles,AddEmployee ,AllEmployees} from './pages/employee-management/index';
 import { Availability ,EmployeePreferences} from './pages/availability/index';
 import { TimeOff } from './pages/request-and-approvels/Time-off';
@@ -330,16 +330,7 @@ function App() {
             } 
           />
 
-          <Route 
-            path="/schedules/builder-temp" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <EnhancedScheduleBuilder />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
+        
           <Route 
             path="/schedules/optimization" 
             element={
@@ -409,16 +400,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/ui-guide" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <UIStrategyGuide />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
+          
         </Routes>
       </Router>
     </AuthProvider>

@@ -40,7 +40,7 @@ export interface Shift {
 
 }
 
-
+import { getOrganizationId, getEmployeeId,getDepartmentId,getAuthHeaders } from '../../utils/authUtils';
 import { departmentAPI } from "../../api/department";
 import { shiftAPI } from "../../api/shiftType";
 import { roleAPI } from "../../api/role";
@@ -69,6 +69,11 @@ export const ScheduleBuilder: React.FC = () => {
       const response = await departmentAPI.getAllByOrganization();
       console.log("Fetched departments:", response);
       setDepartments(response);
+      
+      // Set default department if there's only one option
+      if (response.length === 1 && !newShift.department) {
+        setNewShift(prev => ({ ...prev, department: response[0].id }));
+      }
     };
 
     fetchDepartments();
@@ -89,6 +94,11 @@ export const ScheduleBuilder: React.FC = () => {
       const response = await shiftAPI.getAllByOrganization();
       console.log("Fetched shift types:", response);
       setShiftTypes(response);
+      
+      // Set default shift type if there's only one option
+      if (response.length === 1 && !newShift.shiftType) {
+        setNewShift(prev => ({ ...prev, shiftType: response[0].id }));
+      }
     };
 
     fetchShiftTypes();
@@ -99,6 +109,11 @@ export const ScheduleBuilder: React.FC = () => {
       const response = await roleAPI.getAllRoles();
       console.log("Fetched roles:", response);
       setRoles(response);
+      
+      // Set default role if there's only one option
+      if (response.length === 1 && !newShift.requiredRole) {
+        setNewShift(prev => ({ ...prev, requiredRole: response[0].id }));
+      }
     };
 
     fetchRoles();
@@ -197,9 +212,9 @@ export const ScheduleBuilder: React.FC = () => {
 
   const [newShift, setNewShift] = useState<Omit<Shift, "id">>({
     shiftDate: selectedDate,
-    shiftType: "123e4567-e89b-12d3-a456-426655440001",
-    department: "123e4567-e89b-12d3-a456-426655440001",
-    requiredRole: "123e4567-e89b-12d3-a456-426655440001",
+    shiftType: "",
+    department: "",
+    requiredRole: "",
     requiredEmployees: 1,
     priorityLevel: 1,
     notes: "",
@@ -208,21 +223,27 @@ export const ScheduleBuilder: React.FC = () => {
   });
 
   const addShift = () => {
+    // Validate required fields
+    if (!newShift.shiftType || !newShift.department || !newShift.requiredRole) {
+      alert('Please fill in all required fields: Shift Type, Department, and Required Role');
+      return;
+    }
+
     const shift: Shift = {
       ...newShift,
-      id: generateUniqueId(), // Generate a unique ID for the shift
+      id: generateUniqueId(), 
     };
 
     // Update shifts state
     const updatedShifts = [...shifts, shift];
     setShifts(updatedShifts);
 
-    // Reset form
+    // Reset form with default values
     setNewShift({
       shiftDate: selectedDate,
-      shiftType: "123e4567-e89b-12d3-a456-426655440001",
-      department: "123e4567-e89b-12d3-a456-426655440001",
-      requiredRole: "123e4567-e89b-12d3-a456-426655440001", // Keep as string
+      shiftType: shiftTypes.length === 1 ? shiftTypes[0].id : "",
+      department: departments.length === 1 ? departments[0].id : "",
+      requiredRole: roles.length === 1 ? roles[0].id : "",
       requiredEmployees: 1,
       priorityLevel: 1,
       notes: "",
@@ -407,8 +428,12 @@ export const ScheduleBuilder: React.FC = () => {
     }
 
     try {
+      const orgId = getOrganizationId();
+      const depId = getDepartmentId();
       const payload = {
-        shiftId: Array.from(selectedShiftIds)
+        shiftId: Array.from(selectedShiftIds),
+        organizationId: orgId,
+        departmentId: depId,
       };
 
       const response = await fetch("http://localhost:8080/api/optimization/solve", {
@@ -426,7 +451,9 @@ export const ScheduleBuilder: React.FC = () => {
         // Optionally refresh shifts or update UI
       } else {
         console.error("Optimization failed:", response.statusText);
-        alert("Failed to optimize schedule. Please try again.");
+        // genatate alert by mentioning possible reasons -  can not find relevent employees.
+        alert("Optimization failed. Please ensure selected shifts have valid skill requirements and there are available employees.");
+
       }
     } catch (error) {
       console.error("Error calling optimization API:", error);
@@ -583,7 +610,7 @@ useEffect(() => {
           Schedule Builder
         </h1>
         <p className="text-gray-600 mb-4">
-          Create shifts and define skill requirements for the roster period
+          Create shifts and define skill requirements for the roster period dkjjsd
         </p>
         <div className="flex space-x-4 mb-4">
           <button
@@ -716,7 +743,9 @@ useEffect(() => {
                     })
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 >
+                  <option value="">Select a shift type...</option>
                   {shiftTypes.map((type) => (
                     <option key={type.id} value={type.id}>
                       {type.shiftName} ({type.startTime}-{type.endTime}) -{" "}
@@ -740,7 +769,9 @@ useEffect(() => {
                     })
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 >
+                  <option value="">Select a department...</option>
                   {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
                       {dept.departmentName} - {dept.location}
@@ -763,7 +794,9 @@ useEffect(() => {
                     })
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 >
+                  <option value="">Select a role...</option>
                   {roles.map((role) => (
                     <option key={role.id} value={role.id}>
                       {role.roleName}

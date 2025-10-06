@@ -286,6 +286,9 @@ export const employeeAPI = {
     organization: string;
   }): Promise<any> {
     try {
+      // add organization to data
+      data.organization = getOrganizationId();
+      
       const response = await fetch(`${BASE_URL}/employees`, {
         method: "POST",
         headers: {

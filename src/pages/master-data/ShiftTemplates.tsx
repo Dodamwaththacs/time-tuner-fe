@@ -14,6 +14,7 @@ import {
 
 import type { ShiftType } from '../../api/shiftType';
 import { shiftAPI } from '../../api/shiftType';
+import { data } from 'react-router-dom';
 
 export const ShiftTemplates: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -388,11 +389,13 @@ export const ShiftTemplates: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
                     <input
-                      type="datetime-local"
-                      value={formData.startTime ? new Date(formData.startTime).toISOString().slice(0, 16) : ''}
+                      type="time"
+                      value={formData.startTime ? new Date(formData.startTime).toTimeString().slice(0, 5) : ''}
                       onChange={(e) => {
                         if (e.target.value) {
-                          const isoString = new Date(e.target.value).toISOString();
+                          // Create a datetime with today's date and the selected time
+                          const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+                          const isoString = new Date(`${today}T${e.target.value}:00`).toISOString();
                           handleInputChange('startTime', isoString);
                         } else {
                           handleInputChange('startTime', '');
@@ -405,11 +408,13 @@ export const ShiftTemplates: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
                     <input
-                      type="datetime-local"
-                      value={formData.endTime ? new Date(formData.endTime).toISOString().slice(0, 16) : ''}
+                      type="time"
+                      value={formData.endTime ? new Date(formData.endTime).toTimeString().slice(0, 5) : ''}
                       onChange={(e) => {
                         if (e.target.value) {
-                          const isoString = new Date(e.target.value).toISOString();
+                          // Create a datetime with today's date and the selected time
+                          const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+                          const isoString = new Date(`${today}T${e.target.value}:00`).toISOString();
                           handleInputChange('endTime', isoString);
                         } else {
                           handleInputChange('endTime', '');

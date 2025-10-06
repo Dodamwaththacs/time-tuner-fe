@@ -1,3 +1,7 @@
+import { getOrganizationId, getEmployeeId,getDepartmentId,getAuthHeaders } from '../utils/authUtils';
+
+
+
 // Personal Schedule Interfaces
 export interface PersonalShift {
   id: string;
@@ -35,7 +39,6 @@ export interface PersonalShiftConverted {
   notes?: string;
 }
 
-const employeeId = "123e4567-e89b-12d3-a456-426655440003";
 
 const getShiftColor = (shiftName: string): string => {
   const name = shiftName.toLowerCase();
@@ -63,6 +66,8 @@ const convertPersonalShift = (shift: PersonalShift): PersonalShiftConverted => {
 
 export const personalScheduleAPI = {
   getShiftsByEmployee: async (): Promise<PersonalShiftConverted[]> => {
+
+    const employeeId = getEmployeeId();
     const response = await fetch(
       `http://localhost:8080/api/rosterAssignments/employee/${employeeId}`
     );

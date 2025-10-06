@@ -178,14 +178,7 @@ export const UserList: React.FC = () => {
             <UserPlus className="w-4 h-4 mr-2" />
             Add User
           </button>
-          <button className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-            <Upload className="w-4 h-4 mr-2" />
-            Bulk Import
-          </button>
-          <button className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </button>
+         
         </div>
       </div>
 

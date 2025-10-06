@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { usersAPI, type CreateUserRequest } from "../../api/users";
@@ -13,21 +13,48 @@ import {
   Camera,
 } from "lucide-react";
 
+// import deparment api
+import { departmentAPI, type Department } from "../../api/department";
+
 export const AddUser: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(true);
   
   const [formData, setFormData] = useState<CreateUserRequest>({
     email: "",
     displayName: "",
-    userType: "EMPLOYEE",
+    userType: "MANAGER",
     phone: "",
     avatar: "",
     status: true,
   });
 
   const [errors, setErrors] = useState<Partial<CreateUserRequest>>({});
+
+  // Fetch departments on component mount
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoadingDepartments(true);
+        const departmentsData = await departmentAPI.getAllByOrganization();
+        setDepartments(departmentsData);
+        
+        // Auto-select if only one department
+        if (departmentsData.length === 1 && !formData.department) {
+          setFormData(prev => ({ ...prev, department: departmentsData[0].id }));
+        }
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+      } finally {
+        setLoadingDepartments(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<CreateUserRequest> = {};
@@ -107,13 +134,13 @@ export const AddUser: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <button
+          {/* <button
             onClick={() => navigate("/users/list")}
             className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Users
-          </button>
+          </button> */}
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Add New User</h1>
             <p className="text-gray-600 mt-1">
@@ -268,6 +295,41 @@ export const AddUser: React.FC = () => {
                   {formData.userType === "MANAGER" && "Access to manage teams and schedules"}
                   {formData.userType === "EMPLOYEE" && "Standard employee access"}
                 </p>
+              </div>
+
+              {/* Department */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <User className="w-4 h-4 inline mr-1" />
+                  Department
+                </label>
+                {loadingDepartments ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                    Loading departments...
+                  </div>
+                ) : (
+                  <select
+                    name="department"
+                    value={formData.department || ""}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.department ? "border-red-300" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Select a department...</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.departmentName} - {dept.location}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {errors.department && (
+                  <p className="text-red-600 text-sm mt-1">{errors.department}</p>
+                )}
+                {departments.length === 0 && !loadingDepartments && (
+                  <p className="text-amber-600 text-sm mt-1">No departments available. Please create departments first.</p>
+                )}
               </div>
             </div>
 
