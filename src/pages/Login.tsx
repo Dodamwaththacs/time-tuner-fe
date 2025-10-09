@@ -58,6 +58,8 @@ export const Login: React.FC = () => {
       let success;
       if (isLogin) {
         success = await login(email, password);
+        
+
         if (!success) {
           setError('Invalid email or password');
         }

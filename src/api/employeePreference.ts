@@ -1,7 +1,9 @@
 
+
+import { getOrganizationId, getEmployeeId,getDepartmentId,getAuthHeaders } from '../utils/authUtils';
+
 const API_BASE_URL = 'http://localhost:8080/api';
-const organizationId = "123e4567-e89b-12d3-a456-426655440001";
-const employeeId = "123e4567-e89b-12d3-a456-426655440001";
+// const employeeId = "123e4567-e89b-12d3-a456-426655440001";
 
 
 export interface EmployeePreference {
@@ -41,6 +43,7 @@ export const employeePreferenceAPI = {
   },
   
   getAllByEmployee: async (): Promise<EmployeePreferenceWithOutId[]> => {
+    const employeeId = getEmployeeId();
     const response = await fetch(`${API_BASE_URL}/employeePreferences/employee/${employeeId}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }

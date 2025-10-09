@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { getOrganizationId, getEmployeeId,getDepartmentId,getAuthHeaders } from '../../utils/authUtils';
+
 import { 
   Calendar, 
   Clock, 
@@ -14,6 +16,7 @@ import {
   User
 } from "lucide-react";
 import { availabilityAPI } from "../../api/availability";
+
 
 // TypeScript interfaces
 interface UnavailabilityFormData {
@@ -101,6 +104,20 @@ export const Availability: React.FC = () => {
       return;
     }
 
+    // Validate that the date is not in the past or today
+    const selectedDate = new Date(formData.date);
+    const tomorrow = new Date();
+    tomorrow.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+    tomorrow.setDate(tomorrow.getDate() + 1); // Set to tomorrow
+    
+    if (selectedDate < tomorrow) {
+      setNotification({
+        type: 'warning',
+        message: 'Cannot request time off for past dates or today. Please select tomorrow or a future date.'
+      });
+      return;
+    }
+
     if (formData.startTime >= formData.endTime) {
       setNotification({
         type: 'warning',
@@ -123,7 +140,7 @@ export const Availability: React.FC = () => {
         availabilityType: 'UNAVAILABLE',
         reason: formData.reason,
         createdAt: null,
-        employee: '123e4567-e89b-12d3-a456-426655440001' 
+        employee: getEmployeeId() 
       };
 
       // Call the API to create availability
@@ -364,7 +381,7 @@ export const Availability: React.FC = () => {
             <span className="font-semibold">Request Time Off</span>
           </button>
           
-          <div className="flex gap-3">
+          {/* <div className="flex gap-3">
             <button className="px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700">
               <Calendar size={16} />
               <span>Export Calendar</span>
@@ -373,7 +390,7 @@ export const Availability: React.FC = () => {
               <Clock size={16} />
               <span>View History</span>
             </button>
-          </div>
+          </div> */}
         </div>
 
         {/* Enhanced Form */}
@@ -412,6 +429,7 @@ export const Availability: React.FC = () => {
                     id="date"
                     name="date"
                     value={formData.date}
+                    min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                     onChange={handleInputChange}
                     className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                     required

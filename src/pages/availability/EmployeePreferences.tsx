@@ -7,6 +7,8 @@ import type { Department } from "../../api/department";
 import type { EmployeePreference } from "../../api/employeePreference";
 import type { EmployeePreferenceWithOutId } from "../../api/employeePreference";
 import { employeePreferenceAPI } from "../../api/employeePreference";
+import { getOrganizationId, getEmployeeId,getDepartmentId,getAuthHeaders } from '../../utils/authUtils';
+
 
 
 export const EmployeePreferences: React.FC = () => {
@@ -130,8 +132,18 @@ export const EmployeePreferences: React.FC = () => {
         await employeePreferenceAPI.update(formData);
         showNotification('success', 'Preference updated successfully!');
       } else {
-        await employeePreferenceAPI.create(formData);
-        showNotification('success', 'Preference created successfully!');
+        const createData = {
+        preferenceType: formData.preferenceType,
+        preferenceWeight: formData.preferenceWeight,
+        notes: formData.notes,
+        employee: getEmployeeId(),
+        shiftType: formData.shiftType,
+        department: formData.department,
+        active: true
+      };
+      
+      await employeePreferenceAPI.create(createData);
+      showNotification('success', 'Preference created successfully!');
       }
   
       // Reset form and close
