@@ -726,9 +726,23 @@ export const AddEmployee: React.FC = () => {
                   <input
                     type="date"
                     value={formData.contractStart}
-                    onChange={(e) =>
-                      handleInputChange("contractStart", e.target.value)
-                    }
+                    onChange={(e) => {
+                      handleInputChange("contractStart", e.target.value);
+                      // Validate end date when start date changes
+                      if (formData.contractEnd && new Date(formData.contractEnd) <= new Date(e.target.value)) {
+                        setErrors(prev => ({
+                          ...prev,
+                          contractEnd: "End date must be after the start date"
+                        }));
+                      } else if (formData.contractEnd) {
+                        // Clear error if end date is now valid
+                        setErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.contractEnd;
+                          return newErrors;
+                        });
+                      }
+                    }}
                     className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.contractStart ? "border-red-500" : "border-gray-300"
                     }`}
@@ -747,9 +761,24 @@ export const AddEmployee: React.FC = () => {
                   <input
                     type="date"
                     value={formData.contractEnd}
-                    onChange={(e) =>
-                      handleInputChange("contractEnd", e.target.value)
-                    }
+                    min={formData.contractStart || undefined}
+                    onChange={(e) => {
+                      handleInputChange("contractEnd", e.target.value);
+                      // Validate immediately when end date is selected
+                      if (formData.contractStart && new Date(e.target.value) <= new Date(formData.contractStart)) {
+                        setErrors(prev => ({
+                          ...prev,
+                          contractEnd: "End date must be after the start date"
+                        }));
+                      } else {
+                        // Clear error if date is valid
+                        setErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.contractEnd;
+                          return newErrors;
+                        });
+                      }
+                    }}
                     className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       errors.contractEnd ? "border-red-500" : "border-gray-300"
                     }`}
@@ -758,6 +787,12 @@ export const AddEmployee: React.FC = () => {
                     <p className="mt-1 text-sm text-red-600 flex items-center">
                       <AlertCircle className="w-4 h-4 mr-1" />
                       {errors.contractEnd}
+                    </p>
+                  )}
+                  {formData.contractStart && formData.contractEnd && !errors.contractEnd && (
+                    <p className="mt-1 text-sm text-green-600 flex items-center">
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Contract duration: {Math.ceil((new Date(formData.contractEnd).getTime() - new Date(formData.contractStart).getTime()) / (1000 * 60 * 60 * 24))} days
                     </p>
                   )}
                 </div>

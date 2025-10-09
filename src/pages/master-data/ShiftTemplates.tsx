@@ -69,11 +69,49 @@ export const ShiftTemplates: React.FC = () => {
     }
   }, [showAddTemplate, editingTemplate]);
 
+  const calculateDuration = (startTime: string, endTime: string): number => {
+    if (!startTime || !endTime) return 0;
+    
+    try {
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+      
+      // Calculate difference in milliseconds
+      let diffMs = end.getTime() - start.getTime();
+      
+      // If end time is before start time, assume it's the next day
+      if (diffMs < 0) {
+        diffMs += 24 * 60 * 60 * 1000; // Add 24 hours
+      }
+      
+      // Convert to hours and round to 2 decimal places
+      const hours = diffMs / (1000 * 60 * 60);
+      return Math.round(hours * 100) / 100;
+    } catch (error) {
+      console.error('Error calculating duration:', error);
+      return 0;
+    }
+  };
+
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      
+      // Auto-calculate duration when start or end time changes
+      if (field === 'startTime' || field === 'endTime') {
+        const startTime = field === 'startTime' ? value : prev.startTime;
+        const endTime = field === 'endTime' ? value : prev.endTime;
+        
+        if (startTime && endTime) {
+          newData.durationHours = calculateDuration(startTime, endTime);
+        }
+      }
+      
+      return newData;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -178,14 +216,14 @@ export const ShiftTemplates: React.FC = () => {
           <p className="text-gray-600 mt-1">Manage shift templates with basic time scheduling information</p>
         </div>
         <div className="flex space-x-3">
-          <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          {/* <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
             <Download className="w-4 h-4 mr-2" />
             Export
           </button>
           <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
             <Upload className="w-4 h-4 mr-2" />
             Import
-          </button>
+          </button> */}
           <button 
             onClick={() => setShowAddTemplate(true)}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -426,17 +464,24 @@ export const ShiftTemplates: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration (Hours)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Duration (Hours)
+                    <span className="text-xs text-gray-500 ml-2">Auto-calculated</span>
+                  </label>
                   <input
                     type="number"
                     value={formData.durationHours}
-                    onChange={(e) => handleInputChange('durationHours', parseInt(e.target.value) || 0)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Duration in hours"
-                    min="1"
+                    readOnly
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-700 cursor-not-allowed"
+                    placeholder="Auto-calculated from start and end time"
+                    min="0"
                     max="24"
-                    required
                   />
+                  {/* {formData.durationHours > 0 && (
+                    <p className="text-xs text-green-600 mt-1">
+                      ✓ {formData.durationHours} hour{formData.durationHours !== 1 ? 's' : ''} shift
+                    </p>
+                  )} */}
                 </div>
                 <div>
                   <label className="flex items-center space-x-2">
