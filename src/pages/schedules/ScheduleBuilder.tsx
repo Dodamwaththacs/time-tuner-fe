@@ -722,6 +722,7 @@ useEffect(() => {
                 <input
                   type="date"
                   value={newShift.shiftDate}
+                  min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                   onChange={(e) =>
                     setNewShift({ ...newShift, shiftDate: e.target.value })
                   }

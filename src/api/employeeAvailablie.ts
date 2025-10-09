@@ -1,5 +1,7 @@
-const organizationId = "123e4567-e89b-12d3-a456-426655440001";
-const departmentId = "123e4567-e89b-12d3-a456-426655440002";
+import { getOrganizationId, getEmployeeId,getDepartmentId,getAuthHeaders } from '../utils/authUtils';
+
+const organizationId = getOrganizationId();
+const departmentId = getDepartmentId();
 
 
   export interface EmployeeAvailability {
