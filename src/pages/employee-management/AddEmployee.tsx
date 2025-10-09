@@ -32,9 +32,6 @@ interface EmployeeSkill {
   proficiency: "CERTIFIED" | "EXPERIENCED" | "EXPERT" | null;
 }
 
-
-
-
 const steps = [
   { id: 1, name: "Basic Information", icon: UserPlus },
   { id: 2, name: "Role & Department", icon: Shield },
@@ -59,27 +56,18 @@ export const AddEmployee: React.FC = () => {
       setError(null);
 
       try {
-        // Fetch departments
         const departmentsResponse = await departmentAPI.getAllByOrganization();
-        console.log("Fetched departments:", departmentsResponse);
         setDepartments(departmentsResponse);
 
-        // Fetch contracts
         const contractsResponse = await contractAPI.getAllContractTypes();
-        console.log("Fetched contracts:", contractsResponse);
         setContracts(contractsResponse);
 
-        // Load roles from API
         const rolesResponse = await roleAPI.getAllRoles();
-        const activeRoles = rolesResponse.filter(role => role.active);
+        const activeRoles = rolesResponse.filter((role) => role.active);
         setRoles(activeRoles);
-        console.log("Loaded roles:", activeRoles);
 
-        // Fetch skills
         const skillsResponse = await skillAPI.getAllSkills();
-        console.log("Fetched skills:", skillsResponse);
         setSkills(skillsResponse);
-
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Failed to load data. Please try again.");
@@ -100,44 +88,111 @@ export const AddEmployee: React.FC = () => {
     contractEnd: "",
     ftePercentage: 0,
     activeContract: false,
-    role: "employee" as UserRole,
+    role: "", // Changed default to empty string for validation
     department: "",
     hireDate: "",
     contract: "",
     salary: "",
     skills: [] as EmployeeSkill[],
     avatar: null as File | null,
-    organization : "123e4567-e89b-12d3-a456-426655440001",
-
+    organization: "123e4567-e89b-12d3-a456-426655440001",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState(1);
 
-  const validateForm = () => {
+  // NEW: Comprehensive validation for final submission
+  const validateAllSteps = (): Record<string, string> => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName.trim())
-      newErrors.firstName = "First name is required";
+    // Step 1 validation
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
     if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Email is invalid";
     }
-
-    if (!formData.department) newErrors.department = "Department is required";
     if (!formData.hireDate) newErrors.hireDate = "Hire date is required";
+    
+    // Step 2 validation
+    if (!formData.role) newErrors.role = "Role is required";
+    if (!formData.department) newErrors.department = "Department is required";
+    if (!formData.contract) newErrors.contract = "Contract type is required";
+    
+    // Step 3 validation
+    if (!formData.contractStart) newErrors.contractStart = "Contract start date is required";
+    if (!formData.contractEnd) newErrors.contractEnd = "Contract end date is required";
+    if (
+      formData.contractStart &&
+      formData.contractEnd &&
+      new Date(formData.contractEnd) <= new Date(formData.contractStart)
+    ) {
+      newErrors.contractEnd = "End date must be after the start date";
+    }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
+  };
+
+  // NEW: Step-by-step validation
+  const validateStep = (step: number): boolean => {
+    const currentErrors: Record<string, string> = {};
+    let fieldsToValidate: string[] = [];
+
+    switch (step) {
+      case 1:
+        fieldsToValidate = ['firstName', 'lastName', 'email', 'hireDate'];
+        if (!formData.firstName.trim()) currentErrors.firstName = "First name is required";
+        if (!formData.lastName.trim()) currentErrors.lastName = "Last name is required";
+        if (!formData.email.trim()) {
+          currentErrors.email = "Email is required";
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+          currentErrors.email = "Email is invalid";
+        }
+        if (!formData.hireDate) currentErrors.hireDate = "Hire date is required";
+        break;
+      case 2:
+        fieldsToValidate = ['role', 'department', 'contract'];
+        if (!formData.role) currentErrors.role = "Role is required";
+        if (!formData.department) currentErrors.department = "Department is required";
+        if (!formData.contract) currentErrors.contract = "Contract type is required";
+        break;
+      case 3:
+        fieldsToValidate = ['contractStart', 'contractEnd'];
+        if (!formData.contractStart) currentErrors.contractStart = "Contract start date is required";
+        if (!formData.contractEnd) currentErrors.contractEnd = "Contract end date is required";
+        if (
+          formData.contractStart &&
+          formData.contractEnd &&
+          new Date(formData.contractEnd) <= new Date(formData.contractStart)
+        ) {
+          currentErrors.contractEnd = "End date must be after the start date";
+        }
+        break;
+      default:
+        return true; // No validation for other steps
+    }
+    
+    // Clear old errors for fields on the current step and add new ones
+    setErrors(prev => {
+        const nextErrors = { ...prev };
+        fieldsToValidate.forEach(field => delete nextErrors[field]);
+        Object.assign(nextErrors, currentErrors);
+        return nextErrors;
+    });
+
+    return Object.keys(currentErrors).length === 0;
   };
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
@@ -172,13 +227,31 @@ export const AddEmployee: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    const allErrors = validateAllSteps();
+    setErrors(allErrors);
+
+    if (Object.keys(allErrors).length > 0) {
+      // Find the first step that contains an error and navigate to it
+      const fieldToStepMap = {
+          1: ['firstName', 'lastName', 'email', 'hireDate'],
+          2: ['role', 'department', 'contract'],
+          3: ['contractStart', 'contractEnd']
+      };
+      // Explicitly type step.id as a key of fieldToStepMap
+      const firstErrorStep = steps.find(step =>
+        (fieldToStepMap[step.id as keyof typeof fieldToStepMap] || []).some(field => allErrors[field])
+      );
+      if (firstErrorStep) {
+          setActiveStep(firstErrorStep.id);
+      }
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Create the payload in the required format
     const payload = {
-      id: crypto.randomUUID(), // Generate a new UUID for the employee
-      employeeCode: `EMP${Date.now()}`, // Generate employee code
+      id: crypto.randomUUID(),
+      employeeCode: `EMP${Date.now()}`,
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
@@ -196,11 +269,8 @@ export const AddEmployee: React.FC = () => {
     console.log("Payload to be sent:", payload);
     
     try {
-      // API call to create employee
       const response = await employeeAPI.createEmployee(payload);
       console.log("Employee created successfully:", response);
-      
-      // Reset form on success
       resetForm();
       alert("Employee created successfully!");
     } catch (err) {
@@ -217,7 +287,7 @@ export const AddEmployee: React.FC = () => {
       lastName: "",
       email: "",
       phone: "",
-      role: "employee" as UserRole,
+      role: "",
       department: "",
       hireDate: "",
       contract: "",
@@ -234,9 +304,13 @@ export const AddEmployee: React.FC = () => {
     setActiveStep(1);
   };
 
+  // UPDATED nextStep to validate first
+  const nextStep = () => {
+    if (validateStep(activeStep)) {
+      setActiveStep((step) => Math.min(step + 1, steps.length));
+    }
+  };
 
-  const nextStep = () =>
-    setActiveStep((step) => Math.min(step + 1, steps.length));
   const prevStep = () => setActiveStep((step) => Math.max(step - 1, 1));
 
   return (
@@ -315,7 +389,7 @@ export const AddEmployee: React.FC = () => {
           {/* Step 1: Basic Information */}
           {activeStep === 1 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">
+               <h2 className="text-xl font-semibold text-gray-900">
                 Basic Information
               </h2>
 
@@ -479,7 +553,7 @@ export const AddEmployee: React.FC = () => {
 
           {/* Step 2: Role & Department */}
           {activeStep === 2 && (
-            <div className="space-y-6">
+             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900">
                 Role & Department
               </h2>
@@ -546,14 +620,16 @@ export const AddEmployee: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Contract *
+                    Contract Type *
                   </label>
                   <select
                     value={formData.contract}
                     onChange={(e) =>
                       handleInputChange("contract", e.target.value)
                     }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                     className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.contract ? "border-red-500" : "border-gray-300"
+                    }`}
                   >
                     <option value="">Select contract type</option>
                     {contracts.map((contract) => (
@@ -562,6 +638,12 @@ export const AddEmployee: React.FC = () => {
                       </option>
                     ))}
                   </select>
+                   {errors.contract && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {errors.contract}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -647,8 +729,16 @@ export const AddEmployee: React.FC = () => {
                     onChange={(e) =>
                       handleInputChange("contractStart", e.target.value)
                     }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.contractStart ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
+                  {errors.contractStart && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {errors.contractStart}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -660,27 +750,17 @@ export const AddEmployee: React.FC = () => {
                     onChange={(e) =>
                       handleInputChange("contractEnd", e.target.value)
                     }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.contractEnd ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
+                   {errors.contractEnd && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {errors.contractEnd}
+                    </p>
+                  )}
                 </div>
-                {/* <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    FTE Percentage
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.ftePercentage}
-                    onChange={(e) =>
-                      handleInputChange("ftePercentage", e.target.value)
-                    }
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter FTE percentage"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Please enter a value between 0 and 100.
-                  </p>
-                </div> */}
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Active Contract
@@ -729,7 +809,7 @@ export const AddEmployee: React.FC = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Role</p>
                     <p className="text-sm text-gray-900 capitalize">
-                      {formData.role}
+                       {roles.find(r => r.id === formData.role)?.roleName || 'Not Selected'}
                     </p>
                   </div>
                   <div>
@@ -753,10 +833,9 @@ export const AddEmployee: React.FC = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Phone</p>
                     <p className="text-sm text-gray-900">
-                      {formData.phone || "Not selected"}
+                      {formData.phone || "Not provided"}
                     </p>
                   </div>
-
                   <div>
                     <p className="text-sm font-medium text-gray-700">
                       Hire Date
@@ -768,7 +847,7 @@ export const AddEmployee: React.FC = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Salary</p>
                     <p className="text-sm text-gray-900">
-                      {formData.salary || "Not selected"}
+                      {formData.salary || "Not provided"}
                     </p>
                   </div>
                 </div>
@@ -826,7 +905,6 @@ export const AddEmployee: React.FC = () => {
                 type="submit"
                 disabled={isSubmitting}
                 className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                onClick={handleSubmit}
               >
                 {isSubmitting ? (
                   <>

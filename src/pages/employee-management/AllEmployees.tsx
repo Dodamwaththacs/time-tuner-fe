@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   ChevronUp, 
   User, 
@@ -40,6 +41,8 @@ const PREFERENCE_COLORS = {
 } as const;
 
 export const AllEmployees: React.FC = () => {
+  const navigate = useNavigate();
+  
   // State management
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -219,7 +222,9 @@ export const AllEmployees: React.FC = () => {
                 </p>
               </div>
               <div className="flex space-x-3">
-                <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button 
+                onClick={() => navigate('/employees/add')}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Employee
                 </button>
@@ -227,7 +232,7 @@ export const AllEmployees: React.FC = () => {
             </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -265,7 +270,7 @@ export const AllEmployees: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="p-2 bg-orange-100 rounded-lg">
                 <Shield className="w-6 h-6 text-orange-600" />
@@ -277,7 +282,7 @@ export const AllEmployees: React.FC = () => {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Search and Filters */}

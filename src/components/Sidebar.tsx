@@ -139,17 +139,17 @@ const navItems: NavItem[] = [
       // { label: 'Overtime Requests', path: '/approvals/overtime', icon: TrendingUp, roles: ['manager'] }
     ]
   },
-  {
-    label: 'Workforce Planning',
-    path: '/planning',
-    icon: Briefcase,
-    roles: ['manager'],
-    subItems: [
-      { label: 'Demand Forecasting', path: '/planning/demand', icon: TrendingUp, roles: ['manager'] },
-      { label: 'Staffing Requirements', path: '/planning/staffing', icon: Users, roles: ['manager'] },
-      { label: 'Budget Planning', path: '/planning/budget', icon: BarChart3, roles: ['manager'] }
-    ]
-  },
+  // {
+  //   label: 'Workforce Planning',
+  //   path: '/planning',
+  //   icon: Briefcase,
+  //   roles: ['manager'],
+  //   subItems: [
+  //     { label: 'Demand Forecasting', path: '/planning/demand', icon: TrendingUp, roles: ['manager'] },
+  //     { label: 'Staffing Requirements', path: '/planning/staffing', icon: Users, roles: ['manager'] },
+  //     { label: 'Budget Planning', path: '/planning/budget', icon: BarChart3, roles: ['manager'] }
+  //   ]
+  // },
 
   // Employee Navigation
   {
